@@ -89,12 +89,14 @@ and the review preview's panel, so this list cannot silently go stale.
 ### Blocks a production build
 
 The editor's name is supplied: **Gavin McGreevy**, confirmed 24 September
-2026. Two inputs remain.
+2026. The other two were supplied on 27 September 2026 and pass the build
+guard locally; what remains is entering them on Vercel (DEPLOY.md Part 1,
+step 4), because environment values are never committed.
 
-| Input | Where | What I need |
+| Input | Where | Status |
 |---|---|---|
-| Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | Your Beehiiv subscribe page |
-| Contact email | `NEXT_PUBLIC_CONTACT_EMAIL` | The address you are content to publish |
+| Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | `https://novusdata.beehiiv.com/subscribe` — set it on Vercel |
+| Contact email | `NEXT_PUBLIC_CONTACT_EMAIL` | A temporary personal address — set it on Vercel, and swap in a project address before the site is shared |
 
 ### Drafted by me — confirm or rewrite
 
@@ -114,7 +116,7 @@ The editor's name is supplied: **Gavin McGreevy**, confirmed 24 September
 | Author bio facts (`author.credentials`) | `/about` states nothing about you beyond your name |
 | Publishing cadence (`cadence`) | Subscribe blocks say "Delivered by email. Free." and claim **no schedule**. Set it only once you are actually keeping one |
 | First issue date (`firstIssueDate`) | The pre-launch hero announces no date |
-| `NEXT_PUBLIC_BEEHIIV_HOME_URL`, `NEXT_PUBLIC_BEEHIIV_FEED_URL` | Those footer links do not render |
+| `NEXT_PUBLIC_BEEHIIV_FEED_URL` | The footer's RSS link does not render. (The home URL is supplied: `https://novusdata.beehiiv.com`) |
 | `NEXT_PUBLIC_SITE_URL` | Falls back to `$VERCEL_URL`, then localhost. Set it at domain cutover |
 | `BEEHIIV_RSS_URL` | **The archive is empty and the feed was never inspected.** See 6 |
 | `AISSTREAM_API_KEY` | The chokepoint vessel panel on `/monitor` says "not switched on yet"; the keyless feeds work without it. Free key — DEPLOY.md Part 5 |
