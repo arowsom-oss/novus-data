@@ -35,9 +35,9 @@ see 4.12. It got stricter, because the site now names companies.
    `INPUT_LEDGER` in that file — it is the to-do list. (Section 3 below.)
 
 2. **A production build fails on purpose right now.** The editor's name is
-   confirmed. The Beehiiv publication and subscribe URL have not yet been
-   verified; the public contact address is also unset.
-   `npm run build` names both missing inputs. That is deliberate:
+   confirmed. The Beehiiv publication exists, but its subscribe URL must be
+   configured through the environment. The public contact address is not yet
+   chosen. `npm run build` names whichever inputs are missing. That is deliberate:
    a subscribe button that goes nowhere defeats the point of the site. (Section 4.)
 
 3. **`/privacy` is yours to check.** It describes how the site actually behaves
@@ -93,7 +93,7 @@ The editor's name is supplied: **Gavin McGreevy**, confirmed 24 September
 
 | Input | Where | What I need |
 |---|---|---|
-| Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | Verify the Beehiiv publication, then supply its real subscribe page |
+| Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | Supply the real Beehiiv subscribe page through the environment |
 | Contact email | `NEXT_PUBLIC_CONTACT_EMAIL` | The address you are content to publish |
 
 ### Drafted by me — confirm or rewrite

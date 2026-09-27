@@ -75,10 +75,9 @@ be committed.
 ### Why a build can fail on purpose
 
 `src/config/input-ledger.ts` refuses to produce a production build while a
-launch-critical fact is still missing. The editor's name is confirmed; the
-subscribe URL and contact address remain unset in this checkout. Verify the
-Beehiiv publication before supplying its subscribe URL. The error names
-exactly what is missing and where to put it.
+launch-critical fact is still missing. The editor's name is confirmed; set the
+real Beehiiv subscribe URL and a public contact address through the environment.
+The error names exactly what is missing and where to put it.
 
 This is deliberate. An about page with no author, or a subscribe button that
 goes nowhere, defeats the point of the site, and a loud build failure is a much
