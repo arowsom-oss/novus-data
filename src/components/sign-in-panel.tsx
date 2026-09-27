@@ -22,9 +22,8 @@ import { useEffect, useId, useState } from 'react';
  * Two states, decided on the server by `accountsConfigured()` and passed in,
  * because ACCOUNT_STORE is not a NEXT_PUBLIC_ value and cannot be read here:
  *
- *   enabled = false  the pre-launch panel. Sends nothing anywhere and says so
- *                    before and after a submit attempt, so nobody can type an
- *                    address believing it went somewhere.
+ *   enabled = false  the pre-launch panel. It offers no form, so nobody can
+ *                    type an address into a flow that cannot send it.
  *   enabled = true   the real flow.
  *
  * The signed-in check runs after mount rather than on the server on purpose:
@@ -70,13 +69,6 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
 
   async function requestLink(event: React.FormEvent) {
     event.preventDefault();
-
-    if (!enabled) {
-      setStatus('sent');
-      setMessage('Accounts are not open yet, so nothing was sent. Nothing you typed left this page.');
-      return;
-    }
-
     setStatus('sending');
     try {
       const { createSupabaseBrowserClient } = await import('@/lib/supabase/client');
@@ -95,6 +87,23 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
       setStatus('error');
       setMessage('That did not send. Try again in a moment.');
     }
+  }
+
+  if (!enabled) {
+    return (
+      <section aria-labelledby={headingId} className="border border-hairline bg-surface p-7 sm:p-8">
+        <h2 id={headingId} className="font-serif text-heading font-semibold text-fg">
+          Accounts are not open yet
+        </h2>
+        <p className="mt-2 text-meta text-muted">
+          Everything on Novus Data is free to read without an account.
+        </p>
+        <p className="mt-4 border-t border-hairline pt-4 text-meta text-muted">
+          When accounts open they will save the companies and lanes you follow, so the register
+          and the exposure chart lead with what reaches you.
+        </p>
+      </section>
+    );
   }
 
   if (enabled && checked && signedInAs) {
@@ -135,9 +144,7 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
         Sign in
       </h2>
       <p className="mt-2 text-meta text-muted">
-        {enabled
-          ? 'We email you a link. There is no password to choose or remember.'
-          : 'Accounts are not open yet. Everything on Novus Data is free to read without one.'}
+        We email you a link. There is no password to choose or remember.
       </p>
 
       <form className="mt-6 flex flex-col gap-4" onSubmit={requestLink}>
@@ -149,10 +156,10 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
             id={emailId}
             name="email"
             type="email"
-            required={enabled}
+            required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            autoComplete={enabled ? 'email' : 'off'}
+            autoComplete="email"
             placeholder="you@example.com"
             className="min-h-11 border border-rule bg-ink px-3 py-2 text-[0.9375rem] text-fg placeholder:text-muted/70"
           />
@@ -164,7 +171,7 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
           aria-describedby={message ? noticeId : undefined}
           className="mt-1 inline-flex min-h-11 items-center justify-center border border-accent bg-surface-2 px-5 py-3 text-[0.9375rem] font-medium text-fg transition-colors hover:border-link disabled:opacity-60"
         >
-          {status === 'sending' ? 'Sending…' : enabled ? 'Email me a link' : 'Sign in'}
+          {status === 'sending' ? 'Sending…' : 'Email me a link'}
         </button>
 
         <p id={noticeId} role="status" className="min-h-[1.25rem] text-meta text-muted">
@@ -173,9 +180,8 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
       </form>
 
       <p className="mt-2 border-t border-hairline pt-4 text-meta text-muted">
-        {enabled
-          ? 'An account saves the companies and sectors you follow, so the register and the exposure chart lead with what reaches you.'
-          : 'When accounts open they will save the companies and lanes you follow, so the register and the exposure chart lead with what reaches you.'}
+        An account saves the companies and sectors you follow, so the register and the exposure
+        chart lead with what reaches you.
       </p>
     </section>
   );

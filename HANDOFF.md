@@ -34,11 +34,10 @@ see 4.12. It got stricter, because the site now names companies.
    never supplied are `null` and the site renders around their absence. Start at
    `INPUT_LEDGER` in that file — it is the to-do list. (Section 3 below.)
 
-2. **A production build fails on purpose right now.** Three inputs are
-   launch-critical — your name, the subscribe URL, the contact address — and
-   `npm run build` refuses to run while any is missing, naming exactly what to
-   fill in. That is deliberate: an about page with no author defeats the point of
-   the site. (Section 4.)
+2. **A production build fails on purpose right now.** The editor's name is
+   confirmed. The subscribe URL and contact address remain unset in this
+   checkout, and `npm run build` names both missing inputs. That is deliberate:
+   a subscribe button that goes nowhere defeats the point of the site. (Section 4.)
 
 3. **`/privacy` is yours to check.** It describes how the site actually behaves
    and is deliberately not drafted as a legal policy. Read it line by line before
@@ -88,9 +87,11 @@ and the review preview's panel, so this list cannot silently go stale.
 
 ### Blocks a production build
 
+The editor's name is supplied: **Gavin McGreevy**, confirmed 24 September
+2026. Two inputs remain.
+
 | Input | Where | What I need |
 |---|---|---|
-| Author name | `src/config/publication.ts:107` (`author.name`) | Your name exactly as it should appear in print |
 | Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | Your Beehiiv subscribe page |
 | Contact email | `NEXT_PUBLIC_CONTACT_EMAIL` | The address you are content to publish |
 
@@ -730,7 +731,6 @@ The complete list. There is nothing else.
 | File and line | What it is |
 |---|---|
 | `src/app/privacy/page.tsx:16` | **The one intentional TODO.** `/privacy` must be reviewed by you before the domain goes live. It describes real behaviour and is explicitly not a legal policy |
-| `src/config/publication.ts:107` | `author.name` is `null` and blocks a production build |
 | `src/config/publication.ts:109` | `author.credentials` is empty |
 | `src/config/publication.ts:93` | `cadence` is `null`; the site claims no schedule |
 | `src/config/publication.ts:96` | `firstIssueDate` is `null` |

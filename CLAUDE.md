@@ -921,8 +921,8 @@ than static imports that would hoist above the call.
 
 ## 15. Open questions and TODOs
 
-Tracked in `HANDOFF.md`, which is the live list. In short: the author's name and
-verifiable bio facts, the contact address, the three Beehiiv URLs, the publishing
+Tracked in `HANDOFF.md`, which is the live list. In short: verifiable bio facts,
+the contact address, the three Beehiiv URLs, the publishing
 cadence, the real logo file, and confirmation of the drafted topic list and
 methodology statement.
 

@@ -106,7 +106,7 @@ export const INPUT_LEDGER: InputRecord[] = [
   },
   {
     key: 'publication.authors',
-    provenance: 'unanswered',
+    provenance: 'confirmed',
     usedOn: ['/about', '/', 'JSON-LD author', 'issue and register bylines'],
     note: 'The masthead. The FIRST entry is the editor and a production build fails while that name is null, because an about page with no author defeats the point of the site. Append a second entry to add a co-author — each needs a permanent `id` that register entries point at.',
     requiredForLaunch: true,

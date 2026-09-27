@@ -153,10 +153,11 @@ export const publication: Publication = {
 
   authors: [
     {
-      // The editor. NOT SUPPLIED: a production build refuses to run while
-      // this name is null — see assertLaunchReady() in ./input-ledger.ts.
+      // The editor, confirmed by him on 24 September 2026. A production build
+      // refuses to run while this name is null — see assertLaunchReady() in
+      // ./input-ledger.ts.
       id: 'editor',
-      name: null,
+      name: 'Gavin McGreevy',
       // Only statements that are true and checkable today belong here.
       credentials: [],
     },
