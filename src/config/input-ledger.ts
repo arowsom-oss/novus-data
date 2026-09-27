@@ -136,7 +136,7 @@ export const INPUT_LEDGER: InputRecord[] = [
     key: 'NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL',
     provenance: 'unanswered',
     usedOn: ['/', '/subscribe', 'every subscribe block', 'footer'],
-    note: 'The Beehiiv account has not been created yet (confirmed by the owner on 27 September 2026). Once the publication exists, add its real subscribe URL. Until then, subscribe controls render disabled.',
+    note: 'The Beehiiv publication and its subscribe URL have not been verified. Add the real subscribe URL once available. Until then, subscribe controls render disabled.',
     requiredForLaunch: true,
   },
   {

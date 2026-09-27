@@ -76,9 +76,9 @@ be committed.
 
 `src/config/input-ledger.ts` refuses to produce a production build while a
 launch-critical fact is still missing. The editor's name is confirmed; the
-subscribe URL and contact address remain unset in this checkout. The Beehiiv
-account still needs to be created before a subscribe URL can be supplied. The
-error names exactly what is missing and where to put it.
+subscribe URL and contact address remain unset in this checkout. Verify the
+Beehiiv publication before supplying its subscribe URL. The error names
+exactly what is missing and where to put it.
 
 This is deliberate. An about page with no author, or a subscribe button that
 goes nowhere, defeats the point of the site, and a loud build failure is a much
