@@ -80,7 +80,7 @@ export const INPUT_LEDGER: InputRecord[] = [
     key: 'sign-in panel (src/components/sign-in-panel.tsx)',
     provenance: 'unanswered',
     usedOn: ['/'],
-    note: 'A shell. No authentication exists: nothing is sent, nothing is stored, and the panel says so before and after a submit attempt. Replace the submit handler when accounts are real, and delete the notice at the same time.',
+    note: 'When accounts are disabled, the panel has no form. When accounts are configured, it uses a magic-link sign-in flow. Do not open accounts until the backend and policies are ready.',
     requiredForLaunch: false,
   },
   {
@@ -136,7 +136,7 @@ export const INPUT_LEDGER: InputRecord[] = [
     key: 'NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL',
     provenance: 'unanswered',
     usedOn: ['/', '/subscribe', 'every subscribe block', 'footer'],
-    note: 'Not supplied. Subscribe controls render disabled with an explicit "not configured" note rather than linking nowhere.',
+    note: 'The Beehiiv account has not been created yet (confirmed by the owner on 27 September 2026). Once the publication exists, add its real subscribe URL. Until then, subscribe controls render disabled.',
     requiredForLaunch: true,
   },
   {
