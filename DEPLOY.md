@@ -699,7 +699,17 @@ An article or long-term review is written the same way, with the content tag
 
 ### 5. Bring it into the site
 
-Run `npm run sync-issues` with `BEEHIIV_RSS_URL` set, review the new file in
+Use the publication's own RSS feed from step 2 — not Beehiiv's paid import screen.
+Set that URL as `BEEHIIV_RSS_URL` in your local `.env.local`, then run the dry run
+first:
+
+```bash
+npm run sync-issues -- --dry-run
+```
+
+Review the output for warnings that an issue has no body. Stop and fix the feed
+or the importer if one appears; the site needs the full issue text. If the dry
+run is clean, run `npm run sync-issues`, review the new files in
 `content/issues/`, commit and push — Part 3. Do it soon after sending: the feed
 only keeps recent posts. The first real run also answers the four open questions
 in CLAUDE.md §10, which should be recorded there.
