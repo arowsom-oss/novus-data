@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { Container } from '@/components/container';
 import { PageHeader } from '@/components/page-header';
+import { StoryBox } from '@/components/story-box';
 import { ExternalLink, TextLink } from '@/components/text-link';
 import { publication } from '@/config/publication';
 import { absoluteUrl, accountsConfigured, env } from '@/lib/env';
@@ -29,11 +30,12 @@ export default function PrivacyPage() {
   return (
     <>
       <PageHeader
+        width="reading"
         title="Privacy"
         lede="What this site does with information, described plainly."
       />
 
-      <Container width="reading" className="mt-12 flex flex-col gap-10">
+      <Container width="reading" className="mt-8 flex flex-col gap-5">
         <Section heading="This site">
           <p>
             The pages you read — the register, the exposure chart, the monitor, the company and
@@ -115,11 +117,11 @@ export default function PrivacyPage() {
             </p>
           </Section>
         ) : (
-          <Section heading="The sign-in form">
+          <Section heading="Accounts">
             <p>
-              There is a sign-in panel on the home page. It does nothing on this deployment: no
-              account store is configured, it makes no network request, and anything typed into it
-              stays in your browser and is discarded when you leave the page.
+              The home page has an accounts panel. On this deployment it is a notice, not a form:
+              no account store is configured, there is nothing to type into, and it makes no
+              network request.
             </p>
             <p>
               It exists so the signed-in experience can be designed before it is switched on. When
@@ -175,11 +177,11 @@ export default function PrivacyPage() {
   );
 }
 
+/** Each part of the policy is a boxed story, so the text sits on a backing. */
 function Section({ heading, children }: { heading: string; children: React.ReactNode }) {
   return (
-    <section>
-      <h2 className="text-heading font-semibold text-fg">{heading}</h2>
-      <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">{children}</div>
-    </section>
+    <StoryBox as="section" level={2} title={heading}>
+      {children}
+    </StoryBox>
   );
 }

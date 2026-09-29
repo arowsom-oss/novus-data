@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { Container } from '@/components/container';
 import { SeveritySwatch } from '@/components/severity-legend';
+import { StoryBox } from '@/components/story-box';
 import { TextLink } from '@/components/text-link';
 import { publication } from '@/config/publication';
 import type { EntityProfile } from '@/lib/disruptions';
@@ -50,47 +51,63 @@ export default async function EntitiesPage() {
       </Container>
 
       {entities.length === 0 ? (
-        <Container className="mt-12">
-          <p className="max-w-measure text-muted">
-            No company or sector is listed yet. Names appear here once a disruption in the{' '}
-            <TextLink href="/disruptions">register</TextLink> is assessed as reaching them — with a
-            mechanism, a confidence level, a date and a source attached to the claim.
-          </p>
+        <Container className="mt-8">
+          <StoryBox
+            as="section"
+            level={2}
+            className="max-w-reading"
+            kicker="Companies and sectors"
+            kickerTone="muted"
+            title="No company or sector is listed yet"
+            footer={<TextLink href="/disruptions">Open the register</TextLink>}
+          >
+            <p>
+              Names appear here once a disruption in the register is assessed as reaching them,
+              with a mechanism, a confidence level, a date and a source attached to the claim.
+            </p>
+          </StoryBox>
         </Container>
       ) : (
-        <Container className="mt-14">
+        // One box per sector: a reader who holds one shipping name almost
+        // always wants the rest of the sector beside it.
+        <Container className="mt-8 grid gap-4 lg:grid-cols-2">
           {grouped.map(([sector, profiles]) => (
-            <section key={sector} className="mt-12 first:mt-0">
-              <h2 className="text-heading font-semibold text-fg">{sector}</h2>
-              <ul className="mt-5 border-b border-hairline">
+            <StoryBox key={sector} as="section" level={2} kicker="Sector" kickerTone="muted" title={sector}>
+              <ul className="story-list max-w-none">
                 {profiles.map((profile) => (
                   <EntityRow key={profile.entity.id} profile={profile} />
                 ))}
               </ul>
-            </section>
+            </StoryBox>
           ))}
 
           {cleared.length > 0 ? (
-            <section className="mt-16">
-              <h2 className="text-heading font-semibold text-fg">
-                No longer reached
-              </h2>
-              <p className="mt-3 max-w-measure text-muted">
-                Every disruption that reached these names has resolved. They stay listed, and their
-                pages stay up, because an assessment quietly disappearing is indistinguishable from
-                one that was wrong.
-              </p>
-              <ul className="mt-5 border-b border-hairline">
+            <StoryBox
+              as="section"
+              level={2}
+              className="lg:col-span-2"
+              kicker="Resolved"
+              kickerTone="muted"
+              title="No longer reached"
+              deck={
+                <p className="text-muted">
+                  Every disruption that reached these names has resolved. They stay listed, and
+                  their pages stay up, because an assessment quietly disappearing is
+                  indistinguishable from one that was wrong.
+                </p>
+              }
+            >
+              <ul className="story-list max-w-none">
                 {cleared.map((profile) => (
                   <EntityRow key={profile.entity.id} profile={profile} />
                 ))}
               </ul>
-            </section>
+            </StoryBox>
           ) : null}
         </Container>
       )}
 
-      <Container className="mt-16">
+      <Container className="mt-8">
         <p className="max-w-measure text-meta text-muted">
           {publication.disclaimer}
         </p>
@@ -104,10 +121,10 @@ function EntityRow({ profile }: { profile: EntityProfile }) {
   const asOf = lastAssessedAt ? formatShortDate(lastAssessedAt) : null;
 
   return (
-    <li className="border-t border-hairline">
+    <li>
       <Link
         href={`/entities/${entity.id}`}
-        className="group grid gap-x-6 gap-y-2 px-2 py-5 transition-colors hover:bg-surface sm:grid-cols-[1fr_auto] sm:px-3"
+        className="group -mx-3 grid gap-x-6 gap-y-2 px-3 py-3 transition-colors hover:bg-surface-2 sm:grid-cols-[1fr_auto]"
       >
         <div className="min-w-0">
           <span className="block text-[1.0625rem] text-fg transition-colors group-hover:text-link">

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Container } from '@/components/container';
 import { IssueList } from '@/components/issue-list';
 import { PageHeader } from '@/components/page-header';
+import { StoryBox } from '@/components/story-box';
 import { SubscribePanel } from '@/components/subscribe-panel';
 import { TextLink } from '@/components/text-link';
 import { publication } from '@/config/publication';
@@ -39,16 +40,22 @@ export default async function ArticlesPage() {
         lede="Analysis written for the site: long-term reviews that step back over months, and shorter articles on what is moving now."
       />
 
-      <Container className="mt-10 sm:mt-12">
+      <Container className="mt-8">
         {empty ? (
-          <div className="max-w-reading">
-            <p className="text-muted">
-              Nothing has been published here yet. The first articles will appear on this page and
-              stay here permanently; until then, the{' '}
-              <TextLink href="/monitor">monitor</TextLink> and the{' '}
+          <StoryBox
+            as="section"
+            level={2}
+            className="max-w-reading"
+            kicker="Analysis"
+            kickerTone="muted"
+            title="Nothing has been published here yet"
+          >
+            <p>
+              The first articles will appear on this page and stay here permanently. Until then,
+              the <TextLink href="/monitor">monitor</TextLink> and the{' '}
               <TextLink href="/disruptions">register</TextLink> are where the current picture is.
             </p>
-          </div>
+          </StoryBox>
         ) : (
           <div className="flex flex-col gap-14">
             <section aria-labelledby="reviews-heading" className="section-rule">
@@ -84,8 +91,8 @@ export default async function ArticlesPage() {
         )}
       </Container>
 
-      <Container className="mt-20">
-        <SubscribePanel heading="Get the briefing by email" />
+      <Container className="mt-5">
+        <SubscribePanel heading="Get the briefing by email" className="max-w-reading" />
       </Container>
     </>
   );
