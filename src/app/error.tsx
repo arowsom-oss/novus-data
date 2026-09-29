@@ -23,7 +23,7 @@ export default function RouteError({
 
   return (
     <Container width="reading" className="py-24 sm:py-32">
-      <h1 className="font-serif text-title font-semibold text-fg">This page did not load</h1>
+      <h1 className="text-title font-semibold text-fg">This page did not load</h1>
       <p className="mt-5 max-w-measure text-muted">
         Something went wrong while rendering this page. It is a fault at this end, not with your
         browser.

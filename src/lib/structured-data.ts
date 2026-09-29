@@ -7,10 +7,11 @@
  * by machines that will repeat whatever it is told.
  */
 
-import { authorById, editor, namedAuthors, publication } from '@/config/publication';
+import { namedAuthors, publication, recordedBy } from '@/config/publication';
 import type { Issue } from '@/lib/content';
 import type { Disruption } from '@/lib/disruptions/types';
 import { absoluteUrl, env } from '@/lib/env';
+import { toDate } from '@/lib/format';
 
 type Json = Record<string, unknown>;
 
@@ -37,17 +38,12 @@ export function publicationJsonLd(): Json {
 }
 
 export function issueJsonLd(issue: Issue, canonicalUrl: string): Json {
-  const publishedTime =
-    issue.publishedAt && !Number.isNaN(new Date(issue.publishedAt).getTime())
-      ? new Date(issue.publishedAt).toISOString()
-      : undefined;
-
   return compact({
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: issue.title,
     description: issue.excerpt ?? undefined,
-    datePublished: publishedTime,
+    datePublished: toDate(issue.publishedAt)?.toISOString(),
     mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
     author: namedAuthors().length > 0
       ? namedAuthors().map((author) => ({ '@type': 'Person', name: author.name }))
@@ -88,8 +84,8 @@ export function disruptionJsonLd(disruption: Disruption, canonicalUrl: string): 
     // The person who made THIS assessment, not a site-wide byline. Falls back
     // to the editor, who stands behind anything the publication prints.
     author: (() => {
-      const recordedBy = authorById(disruption.author) ?? (editor().name ? editor() : null);
-      return recordedBy ? { '@type': 'Person', name: recordedBy.name } : undefined;
+      const recorder = recordedBy(disruption.author);
+      return recorder ? { '@type': 'Person', name: recorder.name } : undefined;
     })(),
     publisher: { '@type': 'Organization', name: publication.name },
     // Only the entry's own citations, which are required to exist at all.

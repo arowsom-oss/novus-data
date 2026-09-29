@@ -48,7 +48,7 @@ export default async function AccountPage() {
   return (
     <>
       <Container width="reading" className="pt-10 sm:pt-14">
-        <h1 className="font-serif text-title font-semibold text-fg">Your account</h1>
+        <h1 className="text-title font-semibold text-fg">Your account</h1>
         <p className="mt-4 break-words text-meta text-muted">
           {account.email}
           {created ? ` · joined ${created}` : ''}
@@ -62,7 +62,7 @@ export default async function AccountPage() {
       </Container>
 
       <Container width="reading" className="mt-14">
-        <h2 className="font-serif text-heading font-semibold text-fg">What you follow</h2>
+        <h2 className="text-heading font-semibold text-fg">What you follow</h2>
 
         <form action={updateWatchlistAction} className="mt-6">
           <fieldset className="border-t border-hairline pt-5">
@@ -132,7 +132,7 @@ export default async function AccountPage() {
       </Container>
 
       <Container width="reading" className="mt-16">
-        <h2 className="font-serif text-heading font-semibold text-fg">Alerts</h2>
+        <h2 className="text-heading font-semibold text-fg">Alerts</h2>
         <p className="mt-3 max-w-measure text-muted">
           The alerts app is not built yet, so nothing is sent today whatever you choose here. These
           preferences are stored now so they are already correct when it ships — and so that
@@ -212,7 +212,7 @@ export default async function AccountPage() {
       </Container>
 
       <Container width="reading" className="mt-16">
-        <h2 className="font-serif text-heading font-semibold text-fg">Leaving</h2>
+        <h2 className="text-heading font-semibold text-fg">Leaving</h2>
         <p className="mt-3 max-w-measure text-muted">
           Deleting removes your account and everything attached to it — your address, what you
           follow, and your alert preferences. It is immediate and cannot be undone. Nothing is

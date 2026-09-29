@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { Container } from '@/components/container';
+import { SeveritySwatch } from '@/components/severity-legend';
 import { TextLink } from '@/components/text-link';
+import { publication } from '@/config/publication';
 import type { EntityProfile } from '@/lib/disruptions';
 import { SEVERITY_LABELS, listEntities } from '@/lib/disruptions';
 import { absoluteUrl } from '@/lib/env';
@@ -37,7 +39,7 @@ export default async function EntitiesPage() {
   return (
     <>
       <Container className="pt-10 sm:pt-14">
-        <h1 className="font-serif text-title font-semibold text-fg">{title}</h1>
+        <h1 className="text-title font-semibold text-fg">{title}</h1>
         <p className="mt-5 max-w-measure text-subhead text-muted">{description}</p>
         <p className="mt-4 max-w-measure text-muted">
           Each name has its own page listing every disruption that reaches it, the mechanism by
@@ -59,7 +61,7 @@ export default async function EntitiesPage() {
         <Container className="mt-14">
           {grouped.map(([sector, profiles]) => (
             <section key={sector} className="mt-12 first:mt-0">
-              <h2 className="font-serif text-heading font-semibold text-fg">{sector}</h2>
+              <h2 className="text-heading font-semibold text-fg">{sector}</h2>
               <ul className="mt-5 border-b border-hairline">
                 {profiles.map((profile) => (
                   <EntityRow key={profile.entity.id} profile={profile} />
@@ -70,7 +72,7 @@ export default async function EntitiesPage() {
 
           {cleared.length > 0 ? (
             <section className="mt-16">
-              <h2 className="font-serif text-heading font-semibold text-fg">
+              <h2 className="text-heading font-semibold text-fg">
                 No longer reached
               </h2>
               <p className="mt-3 max-w-measure text-muted">
@@ -90,8 +92,7 @@ export default async function EntitiesPage() {
 
       <Container className="mt-16">
         <p className="max-w-measure text-meta text-muted">
-          Novus Data publishes analysis and commentary, not investment advice. Nothing here is a
-          recommendation to buy or sell any security.
+          {publication.disclaimer}
         </p>
       </Container>
     </>
@@ -121,11 +122,7 @@ function EntityRow({ profile }: { profile: EntityProfile }) {
         <div className="flex items-center gap-3 sm:justify-end">
           {worstSeverity ? (
             <>
-              <span
-                className="exposure-cell !min-h-0 h-3.5 w-6"
-                data-severity={worstSeverity}
-                aria-hidden="true"
-              />
+              <SeveritySwatch severity={worstSeverity} />
               <span className="text-meta text-muted">
                 {SEVERITY_LABELS[worstSeverity]} · <span data-numeric>{claims.length}</span>{' '}
                 {claims.length === 1 ? 'disruption' : 'disruptions'}

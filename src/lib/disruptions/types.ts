@@ -107,7 +107,22 @@ export const SEVERITY_LABELS: Record<Severity, string> = {
   high: 'High',
 };
 
+/**
+ * The rule for every permanent id in the register — a disruption's, an
+ * entity's: lowercase letters, digits and single hyphens. It is enforced at
+ * load time, so the URL space under /disruptions and /entities is too.
+ */
+export const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 export const SEVERITY_RANK: Record<Severity, number> = { low: 1, moderate: 2, high: 3 };
+
+/** The strongest severity among some exposures — a real maximum, never a blend. `low` when there are none. */
+export function worstOf(exposures: Array<{ severity: Severity }>): Severity {
+  return exposures.reduce<Severity>(
+    (worst, exposure) => (SEVERITY_RANK[exposure.severity] > SEVERITY_RANK[worst] ? exposure.severity : worst),
+    'low',
+  );
+}
 
 /**
  * How the exposure was established. This is the difference between reporting
@@ -186,6 +201,14 @@ export interface DisruptionSummary {
    * than falling back to the masthead.
    */
   author: string | null;
+  /**
+   * Tracked places this disruption concerns — ids from the live layer's
+   * reference points (src/lib/live/nodes.ts), e.g. "suez", "rotterdam".
+   * Optional. It is what lets the monitor's place board show a register
+   * entry beside the live readings for the same place, and it is a statement
+   * about geography only: naming a port here says nothing about any company.
+   */
+  places: string[];
   sources: Source[];
   exposures: Exposure[];
 }
@@ -239,3 +262,27 @@ export interface DisruptionDiagnostics {
  * built"). Keep it that way unless the page stops being static.
  */
 export const STALE_AFTER_DAYS = 21;
+
+/**
+ * Whole days from a `YYYY-MM-DD` date to `now`, counted from UTC midnight;
+ * null if the value does not start with one. Negative for a future date,
+ * which is worth surfacing rather than clamping — a review date in the future
+ * is a typo.
+ *
+ * The site, `doctor` and `review` all measure age with this one function.
+ * They once had a copy each, and the copies disagreed on a full timestamp:
+ * the site marked an entry stale while `doctor`, reading null as "no age",
+ * left it off its list — silent, in exactly the direction that matters.
+ */
+export function daysSince(iso: string, now: Date = new Date()): number | null {
+  const day = /^(\d{4}-\d{2}-\d{2})/.exec(iso)?.[1];
+  if (!day) return null;
+  const then = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(then.getTime())) return null;
+  return Math.floor((now.getTime() - then.getTime()) / 86_400_000);
+}
+
+export function isStale(iso: string, now?: Date): boolean {
+  const days = daysSince(iso, now);
+  return days !== null && days > STALE_AFTER_DAYS;
+}

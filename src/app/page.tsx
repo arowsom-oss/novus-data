@@ -5,8 +5,10 @@ import Link from 'next/link';
 
 import { ActionLink } from '@/components/action';
 import { Container } from '@/components/container';
+import { IssueList } from '@/components/issue-list';
 import { JsonLd } from '@/components/json-ld';
 import { NeedsInput } from '@/components/needs-input';
+import { SeveritySwatch } from '@/components/severity-legend';
 import { StatusBadge } from '@/components/status-badge';
 import { SignInPanel } from '@/components/sign-in-panel';
 import { SubscribePanel } from '@/components/subscribe-panel';
@@ -16,7 +18,7 @@ import { formatAuthorNames, publication } from '@/config/publication';
 import type { DisruptionSummary, EntityExposure } from '@/lib/disruptions';
 import { CATEGORY_LABELS, SEVERITY_LABELS, buildExposureMatrix, listDisruptions } from '@/lib/disruptions';
 import type { IssueSummary } from '@/lib/content';
-import { listIssues } from '@/lib/content';
+import { listArticles, listIssues } from '@/lib/content';
 import { absoluteUrl, accountsConfigured } from '@/lib/env';
 import { formatIssueLabel, formatLongDate, formatShortDate } from '@/lib/format';
 import { publicationJsonLd } from '@/lib/structured-data';
@@ -28,10 +30,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [disruptions, issues, matrix] = await Promise.all([
+  const [disruptions, issues, matrix, analysis] = await Promise.all([
     listDisruptions(),
     listIssues(3),
     buildExposureMatrix(),
+    listArticles(undefined, 3),
   ]);
 
   const open = disruptions.filter((entry) => entry.status !== 'resolved');
@@ -72,7 +75,7 @@ export default async function HomePage() {
                 >
                   <StatusBadge status={disruption.status} />
                   <div>
-                    <h3 className="font-serif text-[1.1875rem] font-semibold text-fg transition-colors group-hover:text-link">
+                    <h3 className="text-[1.1875rem] font-semibold text-fg transition-colors group-hover:text-link">
                       {disruption.title}
                     </h3>
                     <p className="mt-1.5 max-w-[62ch] text-[0.9375rem] text-muted">
@@ -126,7 +129,7 @@ export default async function HomePage() {
                 </time>
               ) : null}
             </p>
-            <h3 className="mt-3 max-w-[24ch] font-serif text-heading font-semibold text-fg">
+            <h3 className="mt-3 max-w-[24ch] text-heading font-semibold text-fg">
               <Link
                 href={`/briefings/${latestIssue.slug}`}
                 className="transition-colors hover:text-link"
@@ -146,12 +149,28 @@ export default async function HomePage() {
         </Container>
       ) : null}
 
+      {/* Only once something is published: an empty "latest analysis" block
+          is a promise, and this page makes none. */}
+      {analysis.length > 0 ? (
+        <Container className="mt-12 sm:mt-16">
+          <SectionHeading id="analysis">Latest analysis</SectionHeading>
+          <div className="mt-6">
+            <IssueList issues={analysis} label="Latest articles and reviews" basePath="/articles" />
+          </div>
+          <p className="mt-3">
+            <TextLink standalone href="/articles">
+              All articles and long-term reviews
+            </TextLink>
+          </p>
+        </Container>
+      ) : null}
+
       <Container className="mt-12 sm:mt-16">
         <SectionHeading id="coverage">What Novus Data watches</SectionHeading>
         <dl className="mt-6 grid gap-x-14 md:grid-cols-2">
           {coverageTopics.map((topic) => (
             <div key={topic.id} className="border-t border-hairline py-5">
-              <dt className="font-serif text-[1.1875rem] font-semibold text-fg">{topic.title}</dt>
+              <dt className="text-[1.1875rem] font-semibold text-fg">{topic.title}</dt>
               <dd className="mt-1.5 max-w-[52ch] text-[0.9375rem] text-muted">{topic.summary}</dd>
             </div>
           ))}
@@ -169,7 +188,7 @@ export default async function HomePage() {
         <div className="grid gap-8 md:grid-cols-2 [&>*]:min-w-0">
           <SubscribePanel heading={`Subscribe to ${publication.newsletter.name}`} />
           <section className="border border-hairline bg-surface p-7 sm:p-10">
-            <h2 className="font-serif text-heading font-semibold text-fg">
+            <h2 className="text-heading font-semibold text-fg">
               {publication.alerts.name}
             </h2>
             <p className="mt-3 max-w-[52ch] text-muted">
@@ -221,7 +240,7 @@ function LeadDisruption({ disruption }: { disruption: DisruptionSummary }) {
         ) : null}
       </div>
 
-      <h3 className="mt-4 max-w-[20ch] font-serif text-title font-semibold text-fg">
+      <h3 className="mt-4 max-w-[20ch] text-title font-semibold text-fg">
         {disruption.title}
       </h3>
 
@@ -250,7 +269,7 @@ function LeadIssue({ issue }: { issue: IssueSummary }) {
         {date ? <time dateTime={issue.publishedAt}>{date}</time> : null}
       </p>
 
-      <h3 className="mt-3 max-w-[20ch] font-serif text-title font-semibold text-fg">
+      <h3 className="mt-3 max-w-[20ch] text-title font-semibold text-fg">
         {issue.title}
       </h3>
 
@@ -283,13 +302,13 @@ function Opening() {
           {/* A masthead line rather than a bare repeat of the header wordmark:
               the name earns its place here by carrying the descriptor. */}
           <p className="flex flex-col gap-1 border-b-2 border-accent pb-4 sm:flex-row sm:items-baseline sm:gap-4">
-            <span className="font-serif text-[1.375rem] font-semibold tracking-[-0.012em] text-fg">
+            <span className="text-[1.375rem] font-semibold tracking-[-0.012em] text-fg">
               {publication.name}
             </span>
             <span className="text-meta text-muted">{publication.shortDescription}</span>
           </p>
 
-          <h1 className="mt-8 max-w-[15ch] font-serif text-display font-semibold text-fg">
+          <h1 className="mt-8 max-w-[15ch] text-display font-semibold text-fg">
             {publication.openingLine}
           </h1>
 
@@ -378,7 +397,7 @@ function RegisterPulse({
             </dt>
             <dd
               className={clsx(
-                'mt-2 font-serif font-semibold leading-none text-fg',
+                'mt-2 font-semibold leading-none text-fg',
                 stat.date ? 'text-[1.125rem] leading-snug' : 'text-[1.75rem]',
               )}
               data-numeric
@@ -397,7 +416,7 @@ function Mission() {
     <Container className="mt-12 sm:mt-16">
       <div className="max-w-reading section-rule">
         <p className="kicker kicker-muted">Our mission</p>
-        <p className="mt-4 font-serif text-title font-semibold text-fg">{publication.mission}</p>
+        <p className="mt-4 text-title font-semibold text-fg">{publication.mission}</p>
       </div>
     </Container>
   );
@@ -422,6 +441,15 @@ function WhatWeDo() {
       cta: 'Open the chart',
     },
     {
+      // A link, not a live panel. Reading the feeds here would put the home
+      // page on the fifteen-minute regeneration cycle too, doubling the calls
+      // to every publisher for a preview of a page one click away.
+      href: '/monitor',
+      title: 'The monitor',
+      body: 'Public feeds, re-read every fifteen minutes: where reporting of strikes, blockades, sanctions and fighting is running above its normal, flags at ports and straits, ships at ten chokepoints, hazards, port wind and energy prices. Every reading shows when its source produced it.',
+      cta: 'Open the monitor',
+    },
+    {
       href: '/briefings',
       title: 'The briefing',
       body: `${publication.newsletter.name} pulls the week together in writing and sends it by email — what moved, what it is likely to reach next, and what is worth ignoring.`,
@@ -433,21 +461,24 @@ function WhatWeDo() {
     <Container className="mt-12 sm:mt-16">
       <SectionHeading id="what-we-do">What we do at Novus Data</SectionHeading>
       <p className="mt-4 max-w-measure text-muted">
-        Three things, and they feed each other. The register records the problem, the chart says
-        who it lands on, and the briefing explains what it means.
+        Four things, and they feed each other. The register records the problem, the chart says
+        who it lands on, the monitor shows what is moving now, and the briefing explains what it
+        means.
       </p>
 
       {/* One link per pillar, wrapping the whole card: a larger target than a
           trailing text link, and the rule at the top carries the hover so the
-          three columns read as a row rather than three loose paragraphs. */}
-      <div className="mt-8 grid gap-x-14 md:grid-cols-3">
+          columns read as a row rather than loose paragraphs. Two by two until
+          there is room for four across, because four at tablet width leaves
+          each column about twenty characters wide. */}
+      <div className="mt-8 grid gap-x-10 md:grid-cols-2 lg:grid-cols-4">
         {pillars.map((pillar) => (
           <Link
             key={pillar.href}
             href={pillar.href}
             className="group flex flex-col border-t-2 border-hairline py-6 transition-colors hover:border-accent focus-visible:border-accent"
           >
-            <h3 className="font-serif text-[1.1875rem] font-semibold text-fg transition-colors group-hover:text-link">
+            <h3 className="text-[1.1875rem] font-semibold text-fg transition-colors group-hover:text-link">
               {pillar.title}
             </h3>
             <p className="mt-2.5 text-[0.9375rem] text-muted">{pillar.body}</p>
@@ -474,7 +505,7 @@ function TheApp() {
         <div className="grid gap-8 md:grid-cols-[1.4fr_1fr] md:gap-14 [&>*]:min-w-0">
           <div>
             <p className="kicker">In development</p>
-            <h2 className="mt-3 font-serif text-heading font-semibold text-fg">
+            <h2 className="mt-3 text-heading font-semibold text-fg">
               {publication.alerts.name}
             </h2>
             <p className="mt-4 max-w-measure text-muted">
@@ -509,7 +540,7 @@ function WhoItIsFor() {
 
       <div className="mt-8 grid gap-x-16 gap-y-10 md:grid-cols-2 [&>*]:min-w-0">
         <div className="border-t border-hairline pt-6">
-          <h3 className="font-serif text-[1.1875rem] font-semibold text-fg">
+          <h3 className="text-[1.1875rem] font-semibold text-fg">
             If you invest
           </h3>
           <div className="mt-3 flex flex-col gap-3 text-muted">
@@ -528,7 +559,7 @@ function WhoItIsFor() {
         </div>
 
         <div className="border-t border-hairline pt-6">
-          <h3 className="font-serif text-[1.1875rem] font-semibold text-fg">
+          <h3 className="text-[1.1875rem] font-semibold text-fg">
             If you run a business
           </h3>
           <div className="mt-3 flex flex-col gap-3 text-muted">
@@ -577,11 +608,7 @@ function ExposureRow({ row }: { row: EntityExposure }) {
           </span>
         </div>
         <div className="flex items-center gap-3 sm:justify-end">
-          <span
-            className="exposure-cell !min-h-0 h-3.5 w-6"
-            data-severity={row.worstSeverity}
-            aria-hidden="true"
-          />
+          <SeveritySwatch severity={row.worstSeverity} />
           <span className="text-meta text-muted">
             {SEVERITY_LABELS[row.worstSeverity]} ·{' '}
             <span data-numeric>{row.count}</span>{' '}
@@ -596,7 +623,7 @@ function ExposureRow({ row }: { row: EntityExposure }) {
 
 function SectionHeading({ children, id }: { children: ReactNode; id: string }) {
   return (
-    <h2 id={id} className="font-serif text-heading font-semibold text-fg">
+    <h2 id={id} className="text-heading font-semibold text-fg">
       {children}
     </h2>
   );

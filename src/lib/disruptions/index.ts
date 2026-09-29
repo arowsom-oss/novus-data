@@ -13,7 +13,7 @@ import type {
   Exposure,
   Severity,
 } from './types';
-import { SEVERITY_RANK, STALE_AFTER_DAYS } from './types';
+import { SEVERITY_RANK, worstOf } from './types';
 import { readFromActiveSource } from './sources';
 
 export * from './types';
@@ -46,17 +46,6 @@ export async function listDisruptionIds(): Promise<string[]> {
   return (await readFromActiveSource()).map((entry) => entry.id);
 }
 
-function daysSince(iso: string, now: Date = new Date()): number | null {
-  const then = new Date(iso);
-  if (Number.isNaN(then.getTime())) return null;
-  return Math.floor((now.getTime() - then.getTime()) / 86_400_000);
-}
-
-export function isStale(iso: string, now?: Date): boolean {
-  const days = daysSince(iso, now);
-  return days !== null && days > STALE_AFTER_DAYS;
-}
-
 /** The chart's shape: entity rows against disruption columns. */
 export interface ExposureMatrix {
   /** Chart columns, in register order. */
@@ -72,12 +61,17 @@ export interface ExposureMatrix {
   exposureCount: number;
 }
 
-function worstOf(exposures: Exposure[]): Severity {
-  return exposures.reduce<Severity>(
-    (worst, exposure) =>
-      SEVERITY_RANK[exposure.severity] > SEVERITY_RANK[worst] ? exposure.severity : worst,
-    'low',
-  );
+/**
+ * Worst severity, then reach, then name — the chart's row order. /entities
+ * sorts with the same comparator, so the two pages agree about which names
+ * matter most, and the order is stable between builds.
+ */
+function mostExposedFirst<T extends { entity: Entity; worstSeverity: Severity | null }>(reach: (row: T) => number) {
+  const rank = (severity: Severity | null) => (severity ? SEVERITY_RANK[severity] : 0);
+  return (a: T, b: T): number =>
+    rank(b.worstSeverity) - rank(a.worstSeverity) ||
+    reach(b) - reach(a) ||
+    a.entity.name.localeCompare(b.entity.name);
 }
 
 /**
@@ -126,12 +120,7 @@ export async function buildExposureMatrix(options?: {
       worstSeverity: worstOf(exposures),
       count: exposures.length,
     }))
-    .sort((a, b) => {
-      const bySeverity = SEVERITY_RANK[b.worstSeverity] - SEVERITY_RANK[a.worstSeverity];
-      if (bySeverity !== 0) return bySeverity;
-      if (b.count !== a.count) return b.count - a.count;
-      return a.entity.name.localeCompare(b.entity.name);
-    });
+    .sort(mostExposedFirst((row) => row.count));
 
   const sectors = new Map<string, EntityExposure[]>();
   for (const row of rows) {
@@ -227,13 +216,7 @@ export async function listEntities(): Promise<EntityProfile[]> {
     .map((id) => buildProfile(id, all))
     .filter((profile): profile is EntityProfile => profile !== null);
 
-  return profiles.sort((a, b) => {
-    const rank = (severity: Severity | null) => (severity ? SEVERITY_RANK[severity] : 0);
-    const bySeverity = rank(b.worstSeverity) - rank(a.worstSeverity);
-    if (bySeverity !== 0) return bySeverity;
-    if (b.claims.length !== a.claims.length) return b.claims.length - a.claims.length;
-    return a.entity.name.localeCompare(b.entity.name);
-  });
+  return profiles.sort(mostExposedFirst((profile) => profile.claims.length));
 }
 
 export async function getEntityProfile(id: string): Promise<EntityProfile | null> {

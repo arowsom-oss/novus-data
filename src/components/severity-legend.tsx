@@ -1,4 +1,12 @@
-import { CONFIDENCE_LABELS, SEVERITIES, SEVERITY_LABELS } from '@/lib/disruptions/types';
+import clsx from 'clsx';
+
+import {
+  CONFIDENCE_LABELS,
+  SEVERITIES,
+  SEVERITY_LABELS,
+  type Confidence,
+  type Severity,
+} from '@/lib/disruptions/types';
 
 const SWATCH: Record<string, string> = {
   low: 'bg-sev-low',
@@ -56,5 +64,30 @@ export function SeverityLegend() {
         </ul>
       </div>
     </div>
+  );
+}
+
+/**
+ * One severity mark outside the chart: a row's strongest assessment, one
+ * exposure's level. It is the chart's own `.exposure-cell`, so it takes the
+ * same texture channel under forced colours and print. Decorative — every
+ * use sits beside the level in words.
+ */
+export function SeveritySwatch({
+  severity,
+  confidence,
+  className = 'h-3.5 w-6',
+}: {
+  severity: Severity;
+  confidence?: Confidence;
+  className?: string;
+}) {
+  return (
+    <span
+      className={clsx('exposure-cell !min-h-0', className)}
+      data-severity={severity}
+      data-confidence={confidence}
+      aria-hidden="true"
+    />
   );
 }

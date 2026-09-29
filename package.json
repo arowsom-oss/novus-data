@@ -12,6 +12,7 @@
     "sync-issues": "tsx scripts/sync-issues.ts",
     "doctor": "tsx scripts/doctor.ts",
     "review": "tsx scripts/review-register.ts",
+    "live:check": "tsx scripts/live-check.ts",
     "new-disruption": "tsx scripts/new-disruption.ts",
     "check": "npm run typecheck && npm run lint && npm run doctor",
     "build:preview": "NOVUS_ALLOW_INCOMPLETE=1 next build",

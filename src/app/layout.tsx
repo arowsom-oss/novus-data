@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Libre_Franklin, Newsreader } from 'next/font/google';
+import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
@@ -11,20 +11,30 @@ import { env } from '@/lib/env';
 
 import './globals.css';
 
-const newsreader = Newsreader({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-serif-face',
-  // Newsreader is optically sized. Letting it range means headline sizes get
-  // the tighter display cut and body sizes get the more open text cut, which
-  // is what a newspaper does with a real type family.
-  axes: ['opsz'],
-});
-
-const libreFranklin = Libre_Franklin({
+/**
+ * The site is set in one family, and figures are set in its monospace sibling.
+ *
+ * This reverses the serif/sans split §9 previously described, on the author's
+ * instruction — the reasoning is recorded there. The short version: the thing
+ * §9 actually blamed for the site reading as generated was *Inter*, the face a
+ * generated page reaches for. Plex is the opposite of a default. It is a
+ * corporate family with real quirks, and setting every figure in Plex Mono is
+ * a terminal convention that no template does by accident.
+ */
+const plexSans = IBM_Plex_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans-face',
+  weight: ['400', '500', '600', '700'],
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-mono-face',
+  // Only the weights figures are actually set in. Plex Mono ships many more
+  // and each one is a request.
+  weight: ['400', '500', '600'],
 });
 
 export const metadata: Metadata = {
@@ -57,7 +67,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={`${newsreader.variable} ${libreFranklin.variable} h-full`}>
+    <html lang="en" className={`${plexSans.variable} ${plexMono.variable} h-full`}>
       <body className="flex min-h-full flex-col bg-ink text-fg">
         {/* Feed discovery, declared as an element rather than through
             `metadata.alternates.types`.
@@ -72,6 +82,12 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           type="application/feed+json"
           href="/register.json"
           title="Novus Data — disruption register"
+        />
+        <link
+          rel="alternate"
+          type="application/feed+json"
+          href="/feed.json"
+          title="Novus Data — briefings, articles and reviews"
         />
         <a
           href="#main"

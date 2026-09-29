@@ -106,7 +106,7 @@ export const INPUT_LEDGER: InputRecord[] = [
   },
   {
     key: 'publication.authors',
-    provenance: 'unanswered',
+    provenance: 'confirmed',
     usedOn: ['/about', '/', 'JSON-LD author', 'issue and register bylines'],
     note: 'The masthead. The FIRST entry is the editor and a production build fails while that name is null, because an about page with no author defeats the point of the site. Append a second entry to add a co-author — each needs a permanent `id` that register entries point at.',
     requiredForLaunch: true,
@@ -134,23 +134,23 @@ export const INPUT_LEDGER: InputRecord[] = [
   },
   {
     key: 'NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL',
-    provenance: 'unanswered',
+    provenance: 'confirmed',
     usedOn: ['/', '/subscribe', 'every subscribe block', 'footer'],
-    note: 'Not supplied. Subscribe controls render disabled with an explicit "not configured" note rather than linking nowhere.',
+    note: 'https://novusdata.beehiiv.com/subscribe, supplied 27 September 2026. It lives on Vercel, not in the repository; until it is set there, subscribe controls render disabled with an explicit "not configured" note.',
     requiredForLaunch: true,
   },
   {
     key: 'NEXT_PUBLIC_BEEHIIV_HOME_URL / NEXT_PUBLIC_BEEHIIV_FEED_URL',
     provenance: 'unanswered',
     usedOn: ['footer', '/privacy'],
-    note: 'Not supplied. Those footer links are omitted rather than guessed.',
+    note: 'Home URL supplied 27 September 2026: https://novusdata.beehiiv.com. Feed URL not yet — it is in Beehiiv Settings under RSS. Unset links are omitted rather than guessed.',
     requiredForLaunch: false,
   },
   {
     key: 'NEXT_PUBLIC_CONTACT_EMAIL',
-    provenance: 'unanswered',
+    provenance: 'confirmed',
     usedOn: ['/contact', '/about', 'footer'],
-    note: 'Not supplied. /contact explains that no address is configured yet instead of printing a mailto that goes nowhere.',
+    note: 'Supplied 27 September 2026 as a temporary personal address, to be replaced by a project address. Deliberately not written here: it lives on Vercel only, so swapping it later leaves nothing in git history.',
     requiredForLaunch: true,
   },
   {
@@ -277,26 +277,73 @@ export function assertLaunchReady(): void {
  */
 export function assertNoPublicServiceRoleKey(): void {
   // Checked by literal name: Next only inlines literals, so this must not be
-  // built up from a variable or it will not be replaced at all.
-  if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) return;
-
-  throw new Error(
+  // built up from a variable or it will not be replaced at all. The same
+  // holds for every call below.
+  refusePublicKey(
+    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+    'NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY',
     [
-      '',
-      'NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY is set.',
-      '',
       'The service role key must NEVER carry the NEXT_PUBLIC_ prefix. That prefix',
       'inlines the value into the browser bundle, and this key bypasses row-level',
       'security — so publishing it makes every reader row readable and writable by',
       'anyone who opens the site.',
-      '',
+    ],
+    [
       'Rename it to SUPABASE_SERVICE_ROLE_KEY, and rotate the key in the Supabase',
       'dashboard: the old one must be assumed compromised.',
-      '',
-    ].join('\n'),
+    ],
   );
 }
 
+/**
+ * The same refusal for the AISStream key, and for the same reason.
+ *
+ * The stakes are lower than the service role key — this one reads public
+ * vessel broadcasts rather than anyone's personal data — but AISStream's own
+ * documentation says the key must never reach a browser, a published key can
+ * be used by anyone until it is rotated, and abuse of it is charged to this
+ * site's account. The prefix mistake is the realistic way it would leak.
+ */
+export function assertNoPublicAisKey(): void {
+  refusePublicKey(
+    process.env.NEXT_PUBLIC_AISSTREAM_API_KEY,
+    'NEXT_PUBLIC_AISSTREAM_API_KEY',
+    [
+      'The AISStream key must NEVER carry the NEXT_PUBLIC_ prefix: that prefix',
+      'publishes it in the browser bundle, and AISStream requires the key to stay',
+      'on the server.',
+    ],
+    [
+      'Rename it to AISSTREAM_API_KEY, and generate a new key at aisstream.io:',
+      'the old one must be assumed public.',
+    ],
+  );
+}
+
+/** The same refusal for the stock-quote key: a key in the browser bundle is usable by anyone. */
+export function assertNoPublicQuoteKey(): void {
+  refusePublicKey(
+    process.env.NEXT_PUBLIC_FINNHUB_API_KEY,
+    'NEXT_PUBLIC_FINNHUB_API_KEY',
+    [
+      'The Finnhub key must NEVER carry the NEXT_PUBLIC_ prefix: that prefix publishes',
+      'it in the browser bundle, where anyone can copy it and spend its quota.',
+    ],
+    [
+      'Rename it to FINNHUB_API_KEY, and regenerate the key in the Finnhub dashboard:',
+      'the old one must be assumed public.',
+    ],
+  );
+}
+
+/** Throws, naming the variable, what its prefix exposes and how to recover, if `value` is set. */
+function refusePublicKey(value: string | undefined, name: string, why: string[], remedy: string[]): void {
+  if (!value) return;
+  throw new Error(['', `${name} is set.`, '', ...why, '', ...remedy, ''].join('\n'));
+}
+
 assertNoPublicServiceRoleKey();
+assertNoPublicAisKey();
+assertNoPublicQuoteKey();
 
 assertLaunchReady();

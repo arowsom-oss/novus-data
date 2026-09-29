@@ -31,6 +31,7 @@ import path from 'node:path';
 import { INPUT_LEDGER } from '../src/config/input-ledger';
 import { fixturesSource } from '../src/lib/content/sources/fixtures';
 import { fixtureDisruptions } from '../src/lib/disruptions/sources/fixtures';
+import { yamlString } from './lib/cli';
 
 const ROOT = process.cwd();
 // A normal `next build` prerenders every static route to HTML here, which is
@@ -256,11 +257,6 @@ async function readSnapshot(): Promise<{ pages: Page[]; css: string; images: Rec
 
 // --- sample archive ---------------------------------------------------------
 
-/** JSON strings are valid YAML double-quoted scalars, escaping included. */
-function yaml(value: string | null): string {
-  return value === null ? 'null' : JSON.stringify(value);
-}
-
 /**
  * Writes the [SAMPLE] fixtures out as real content files in a temp folder, so
  * the second pass exercises the same local-files sources the site uses in
@@ -286,8 +282,8 @@ async function writeSampleArchive(): Promise<{
       sources
         .map(
           (entry) =>
-            `${prefix}- title: ${yaml(entry.title)}\n${prefix}  url: ${yaml(entry.url)}\n` +
-            `${prefix}  publisher: ${yaml(entry.publisher)}\n${prefix}  retrievedAt: ${yaml(entry.retrievedAt)}`,
+            `${prefix}- title: ${yamlString(entry.title)}\n${prefix}  url: ${yamlString(entry.url)}\n` +
+            `${prefix}  publisher: ${yamlString(entry.publisher)}\n${prefix}  retrievedAt: ${yamlString(entry.retrievedAt)}`,
         )
         .join('\n');
 
@@ -295,15 +291,15 @@ async function writeSampleArchive(): Promise<{
       .map((exposure) =>
         [
           `  - entity:`,
-          `      id: ${yaml(exposure.entity.id)}`,
-          `      name: ${yaml(exposure.entity.name)}`,
-          `      kind: ${yaml(exposure.entity.kind)}`,
-          `      ticker: ${yaml(exposure.entity.ticker)}`,
-          `      sector: ${yaml(exposure.entity.sector)}`,
-          `    severity: ${yaml(exposure.severity)}`,
-          `    confidence: ${yaml(exposure.confidence)}`,
-          `    mechanism: ${yaml(exposure.mechanism)}`,
-          `    asOf: ${yaml(exposure.asOf)}`,
+          `      id: ${yamlString(exposure.entity.id)}`,
+          `      name: ${yamlString(exposure.entity.name)}`,
+          `      kind: ${yamlString(exposure.entity.kind)}`,
+          `      ticker: ${yamlString(exposure.entity.ticker)}`,
+          `      sector: ${yamlString(exposure.entity.sector)}`,
+          `    severity: ${yamlString(exposure.severity)}`,
+          `    confidence: ${yamlString(exposure.confidence)}`,
+          `    mechanism: ${yamlString(exposure.mechanism)}`,
+          `    asOf: ${yamlString(exposure.asOf)}`,
           `    sources:`,
           sourceLines('      ', exposure.sources),
         ].join('\n'),
@@ -312,14 +308,18 @@ async function writeSampleArchive(): Promise<{
 
     const frontmatter = [
       '---',
-      `id: ${yaml(disruption.id)}`,
-      `title: ${yaml(disruption.title)}`,
-      `shortLabel: ${yaml(disruption.shortLabel)}`,
-      `status: ${yaml(disruption.status)}`,
-      `category: ${yaml(disruption.category)}`,
-      `startedAt: ${yaml(disruption.startedAt)}`,
-      `updatedAt: ${yaml(disruption.updatedAt)}`,
-      `summary: ${yaml(disruption.summary)}`,
+      `id: ${yamlString(disruption.id)}`,
+      `title: ${yamlString(disruption.title)}`,
+      `shortLabel: ${yamlString(disruption.shortLabel)}`,
+      `status: ${yamlString(disruption.status)}`,
+      `category: ${yamlString(disruption.category)}`,
+      `startedAt: ${yamlString(disruption.startedAt)}`,
+      `updatedAt: ${yamlString(disruption.updatedAt)}`,
+      `summary: ${yamlString(disruption.summary)}`,
+      // Carried through so the preview's place board lists the register
+      // entries naming each place, as the demo server does.
+      ...(disruption.author ? [`author: ${yamlString(disruption.author)}`] : []),
+      `places: [${disruption.places.map((place) => yamlString(place)).join(', ')}]`,
       'sources:',
       sourceLines('  ', disruption.sources),
       exposures.length > 0 ? `exposures:\n${exposures}` : 'exposures: []',
@@ -345,13 +345,15 @@ async function writeSampleArchive(): Promise<{
     const frontmatter = [
       '---',
       `issueNumber: ${summary.issueNumber ?? 'null'}`,
-      `title: ${JSON.stringify(summary.title)}`,
-      `slug: ${JSON.stringify(summary.slug)}`,
-      `publishedAt: ${JSON.stringify(summary.publishedAt)}`,
-      `excerpt: ${summary.excerpt === null ? 'null' : JSON.stringify(summary.excerpt)}`,
-      `beehiivUrl: ${summary.externalUrl === null ? 'null' : JSON.stringify(summary.externalUrl)}`,
+      `title: ${yamlString(summary.title)}`,
+      `slug: ${yamlString(summary.slug)}`,
+      `publishedAt: ${yamlString(summary.publishedAt)}`,
+      `excerpt: ${yamlString(summary.excerpt)}`,
+      `beehiivUrl: ${yamlString(summary.externalUrl)}`,
       'coverImageUrl: null',
-      'tags: []',
+      // The tags decide the kind — briefing, article or long-term review — so
+      // writing them out is what puts the sample articles under /articles.
+      `tags: ${JSON.stringify(summary.tags)}`,
       '---',
       '',
     ].join('\n');

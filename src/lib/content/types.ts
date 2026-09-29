@@ -7,9 +7,51 @@
  * without touching a single page.
  */
 
+/**
+ * What kind of post this is. Briefings are the emailed newsletter and live at
+ * /briefings; articles and long-term reviews are written for the site and
+ * live at /articles.
+ *
+ * All three are written in Beehiiv and arrive through the same
+ * `npm run sync-issues`, so publishing any of them stays the one manual step
+ * Rule 6 allows. The kind comes from the post's Beehiiv tags (KIND_TAGS
+ * below) — tag a post "Article" or "Long-term review" in Beehiiv and it files
+ * itself. A `kind:` line in the frontmatter overrides the tags, for the rare
+ * hand-written file.
+ */
+export type PostKind = 'briefing' | 'article' | 'review';
+
+export const POST_KIND_LABELS: Record<PostKind, string> = {
+  briefing: 'Briefing',
+  article: 'Article',
+  review: 'Long-term review',
+};
+
+/** A post's one URL: briefings under /briefings, articles and reviews under /articles. */
+export function postPath(post: { kind: PostKind; slug: string }): string {
+  return post.kind === 'briefing' ? `/briefings/${post.slug}` : `/articles/${post.slug}`;
+}
+
+/** Beehiiv tags that file a post as an article or a review. Compared case-insensitively. */
+export const KIND_TAGS: Record<'article' | 'review', string[]> = {
+  article: ['article', 'articles'],
+  review: ['long-term review', 'long term review', 'long-term reviews', 'review', 'reviews'],
+};
+
+/** Pure, so the loader, the fixtures and a test agree. Anything unrecognised is a briefing. */
+export function kindFor(explicit: unknown, tags: string[]): PostKind {
+  if (explicit === 'briefing' || explicit === 'article' || explicit === 'review') return explicit;
+  const lowered = tags.map((tag) => tag.trim().toLowerCase());
+  if (lowered.some((tag) => KIND_TAGS.review.includes(tag))) return 'review';
+  if (lowered.some((tag) => KIND_TAGS.article.includes(tag))) return 'article';
+  return 'briefing';
+}
+
 export interface IssueSummary {
   /** Stable, URL-safe, and permanent once published. Never renamed. */
   slug: string;
+  /** Briefing, article or long-term review. Decides the URL and the list it appears in. */
+  kind: PostKind;
   /** Null when the issue carries no number. Never derived from position. */
   issueNumber: number | null;
   title: string;

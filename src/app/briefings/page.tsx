@@ -40,7 +40,7 @@ export default async function BriefingsPage() {
                 <h2
                   id={`year-${group.year}`}
                   data-numeric
-                  className="font-serif text-heading font-semibold text-fg"
+                  className="text-heading font-semibold text-fg"
                 >
                   {group.year}
                 </h2>

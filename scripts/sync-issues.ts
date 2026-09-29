@@ -24,6 +24,10 @@ import path from 'node:path';
 import { XMLParser } from 'fast-xml-parser';
 import sanitizeHtml from 'sanitize-html';
 
+import { POST_KIND_LABELS, kindFor, postPath, type PostKind } from '@/lib/content/types';
+
+import { plural, yamlString } from './lib/cli';
+
 const ISSUES_DIR = path.join(process.cwd(), 'content', 'issues');
 const EXCERPT_TARGET_LENGTH = 200;
 
@@ -290,12 +294,8 @@ function sanitiseBody(html: string | null): string | null {
 
 // --- writing ----------------------------------------------------------------
 
-/** JSON strings are valid YAML double-quoted scalars, escaping included. */
-function yamlString(value: string | null): string {
-  return value === null ? 'null' : JSON.stringify(value);
-}
-
 interface IssueFile {
+  kind: PostKind;
   fileName: string;
   slug: string;
   contents: string;
@@ -384,7 +384,7 @@ async function main(): Promise<void> {
   }
 
   const items = parseFeed(xml);
-  console.log(`Feed contains ${items.length} item${items.length === 1 ? '' : 's'}.`);
+  console.log(`Feed contains ${plural(items.length, 'item')}.`);
 
   if (items.length === 0) {
     console.log('Nothing to do.');
@@ -457,6 +457,7 @@ async function main(): Promise<void> {
     toWrite.push({
       fileName,
       slug,
+      kind: kindFor(undefined, item.categories),
       contents: renderIssueFile({
         issueNumber: deriveIssueNumber(item.title),
         title: item.title,
@@ -487,7 +488,12 @@ async function main(): Promise<void> {
   if (toWrite.length > 0) {
     console.log('');
     for (const file of toWrite) {
-      console.log(`  ${options.dryRun ? 'would write' : 'wrote'}  content/issues/${file.fileName}`);
+      // Where the post will appear, so a mis-tagged article is caught here
+      // rather than found later in the briefing archive.
+      const where = postPath(file);
+      console.log(
+        `  ${options.dryRun ? 'would write' : 'wrote'}  content/issues/${file.fileName}  → ${POST_KIND_LABELS[file.kind]}, ${where}`,
+      );
     }
   }
 

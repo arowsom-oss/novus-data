@@ -36,7 +36,6 @@ import {
   blank,
   blocker,
   colour,
-  daysSince,
   detail,
   heading,
   info,
@@ -69,7 +68,7 @@ async function main(): Promise<void> {
   const { publication } = await import('@/config/publication');
   const { readDisruptionDiagnostics } = await import('@/lib/disruptions/sources/local-files');
   const { readDiagnostics } = await import('@/lib/content/sources/local-files');
-  const { STALE_AFTER_DAYS } = await import('@/lib/disruptions/types');
+  const { STALE_AFTER_DAYS, daysSince } = await import('@/lib/disruptions/types');
 
   const args = new Set(process.argv.slice(2));
   const nextOnly = args.has('--next');
@@ -205,6 +204,17 @@ async function main(): Promise<void> {
       label: 'NEXT_PUBLIC_BEEHIIV_FEED_URL',
       set: Boolean(process.env.NEXT_PUBLIC_BEEHIIV_FEED_URL),
       note: 'Footer RSS link for readers. Separate from BEEHIIV_RSS_URL, which is a build tool input.',
+    },
+    {
+      // Name only, never the value — see the note at the top of this file.
+      label: 'AISSTREAM_API_KEY',
+      set: Boolean(process.env.AISSTREAM_API_KEY?.trim()),
+      note: 'Enables the chokepoint vessel counts on /monitor; without it that one panel says "not switched on yet". Free at aisstream.io. Server only — set it in .env.local and on Vercel, never with a NEXT_PUBLIC_ prefix. DEPLOY.md Part 5.',
+    },
+    {
+      label: 'FINNHUB_API_KEY',
+      set: Boolean(process.env.FINNHUB_API_KEY?.trim()),
+      note: 'Share prices on /monitor; that panel says "not switched on yet" without it. A licensing decision before a configuration step — Finnhub\'s free plan is non-commercial and public display is redistribution. DEPLOY.md Part 6.',
     },
     {
       label: 'BEEHIIV_RSS_URL',

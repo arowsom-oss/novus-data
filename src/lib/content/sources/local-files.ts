@@ -16,6 +16,7 @@ import path from 'node:path';
 import matter from 'gray-matter';
 
 import type { ContentDiagnostics, ContentSource, Issue } from '../types';
+import { kindFor } from '../types';
 import { wordCount } from '@/lib/format';
 
 /**
@@ -79,10 +80,63 @@ function normaliseIssueNumber(raw: unknown): number | null {
  * YAML dates are parsed into JS Date objects by js-yaml when unquoted, and
  * left as strings when quoted. Accept both and always store ISO 8601.
  */
-function normalisePublishedAt(raw: unknown): string {
-  if (raw instanceof Date && !Number.isNaN(raw.getTime())) return raw.toISOString();
-  if (typeof raw === 'string') return raw.trim();
-  return '';
+/**
+ * `publishedAt` as written, normalised to ISO 8601.
+ *
+ * Unlike a register date this keeps its time part: `sync-issues` derives it
+ * from the feed's RFC 822 `pubDate` and stores `.toISOString()`, and §14.2
+ * relies on it being a real ISO 8601 instant a notification pipeline can
+ * trust. So the shape accepted here is `YYYY-MM-DD` with an optional time,
+ * which is what the sync writes — not anything `new Date()` happens to eat.
+ *
+ * That distinction matters because `new Date()` disagrees with the author on
+ * the loose forms: "10/09/2026" comes back as 9 October rather than
+ * 10 September, and "September 2026" becomes the 1st. A machine-written file
+ * never contains those, but §5 invites hand-editing an issue for typos, and
+ * the failure would be a publication date nobody chose.
+ *
+ * Anything unrecognised is returned as-is so the caller can name it in a
+ * warning and omit the date. **Today's date is never substituted** (§6).
+ */
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}([T ][0-9:.,+Z-]*)?$/i;
+
+/**
+ * Either a normalised ISO instant, or the author's own text and why it was
+ * refused.
+ *
+ * Returning a plain string was not enough: the caller could not tell a valid
+ * value from one handed back unchanged because it failed, so `2026-02-30`
+ * passed a second `new Date()` check and rendered as 2 March. One result type
+ * means one source of truth about validity.
+ */
+type PublishedAt =
+  | { kind: 'missing' }
+  | { kind: 'valid'; iso: string }
+  | { kind: 'invalid'; written: string };
+
+function normalisePublishedAt(raw: unknown): PublishedAt {
+  if (raw instanceof Date) {
+    return Number.isNaN(raw.getTime())
+      ? { kind: 'missing' }
+      : { kind: 'valid', iso: raw.toISOString() };
+  }
+  if (typeof raw !== 'string') return { kind: 'missing' };
+
+  const written = raw.trim();
+  if (written === '') return { kind: 'missing' };
+  if (!ISO_TIMESTAMP.test(written)) return { kind: 'invalid', written };
+
+  const hasTime = written.includes('T') || written.includes(' ');
+  const parsed = new Date(hasTime ? written : `${written}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return { kind: 'invalid', written };
+
+  // Rejects a day that does not exist: `2026-02-30` parses happily and comes
+  // back as `2026-03-02`, which no longer starts with what was written.
+  if (!parsed.toISOString().startsWith(written.slice(0, 10))) {
+    return { kind: 'invalid', written };
+  }
+
+  return { kind: 'valid', iso: parsed.toISOString() };
 }
 
 /**
@@ -123,20 +177,33 @@ function parseIssueFile(file: string, raw: string, warnings: string[]): Issue | 
     return null;
   }
 
-  const publishedAt = normalisePublishedAt(data.publishedAt);
-  if (publishedAt === '') {
+  const parsedDate = normalisePublishedAt(data.publishedAt);
+  if (parsedDate.kind === 'missing') {
     warn(warnings, `${file}: no "publishedAt" — the date will be omitted rather than guessed.`);
-  } else if (Number.isNaN(new Date(publishedAt).getTime())) {
+  } else if (parsedDate.kind === 'invalid') {
     warn(
       warnings,
-      `${file}: "publishedAt" (${publishedAt}) is not a valid date — the date will be omitted rather than guessed.`,
+      `${file}: "publishedAt" (${parsedDate.written}) is not a valid ISO 8601 date — the date ` +
+        'will be omitted rather than guessed.',
+    );
+  }
+  // Empty string is the "no usable date" carrier throughout this layer, and
+  // §6 is explicit that today's date is never substituted for a missing one.
+  const publishedAt = parsedDate.kind === 'valid' ? parsedDate.iso : '';
+
+  const contentHtml = body.trim();
+  const tags = normaliseTags(data.tags);
+
+  if (data.kind !== undefined && !['briefing', 'article', 'review'].includes(String(data.kind))) {
+    warn(
+      warnings,
+      `${file}: "kind" is "${String(data.kind)}"; it must be briefing, article or review. The post's tags decide instead.`,
     );
   }
 
-  const contentHtml = body.trim();
-
   return {
     slug,
+    kind: kindFor(data.kind, tags),
     issueNumber: normaliseIssueNumber(data.issueNumber),
     title,
     publishedAt,
@@ -145,7 +212,7 @@ function parseIssueFile(file: string, raw: string, warnings: string[]): Issue | 
     // deliberately exposes it under the platform-neutral name externalUrl.
     externalUrl: normaliseText(data.beehiivUrl) ?? normaliseText(data.externalUrl),
     coverImageUrl: normaliseText(data.coverImageUrl),
-    tags: normaliseTags(data.tags),
+    tags,
     contentHtml: contentHtml.length > 0 ? contentHtml : null,
   };
 }
@@ -183,8 +250,11 @@ async function readAll(): Promise<ReadResult> {
   const parsed: ParsedFile[] = [];
   const seenSlugs = new Map<string, string>();
 
-  for (const file of files) {
-    const raw = await readFile(path.join(ISSUES_DIRECTORY, file), 'utf8');
+  // Read in parallel, parsed in filename order, so warnings and the
+  // first-occurrence rules below behave exactly as a sequential read would.
+  const contents = await Promise.all(files.map((file) => readFile(path.join(ISSUES_DIRECTORY, file), 'utf8')));
+  for (const [index, file] of files.entries()) {
+    const raw = contents[index];
     const issue = parseIssueFile(file, raw, warnings);
     if (!issue) continue;
 

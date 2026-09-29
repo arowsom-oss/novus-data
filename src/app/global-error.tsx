@@ -21,7 +21,7 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
         }}
       >
         <div style={{ maxWidth: '34rem', margin: '0 auto', padding: '3rem 1.25rem' }}>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '1.75rem', margin: 0 }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 600, letterSpacing: '-0.01em', margin: 0 }}>
             Novus Data could not load
           </h1>
           <p style={{ color: '#9395a0', lineHeight: 1.65, marginTop: '1.25rem' }}>

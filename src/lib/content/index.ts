@@ -7,20 +7,67 @@
  * from. An ESLint rule in eslint.config.mjs enforces it.
  */
 
-import type { Issue, IssueNeighbours, IssueSummary } from './types';
+import type { Issue, IssueNeighbours, IssueSummary, PostKind } from './types';
 import { getContentSource } from './sources';
 
-export type { ContentDiagnostics, Issue, IssueNeighbours, IssueSummary } from './types';
+export type { ContentDiagnostics, Issue, IssueNeighbours, IssueSummary, PostKind } from './types';
+export { KIND_TAGS, POST_KIND_LABELS, postPath } from './types';
 export { getContentSourceName } from './sources';
 
-/** Newest first. `limit` caps the result. */
-export async function listIssues(limit?: number): Promise<IssueSummary[]> {
-  return getContentSource().listIssues(limit);
+/**
+ * "Issue" in this API means a BRIEFING — the emailed newsletter, at
+ * /briefings. Articles and long-term reviews come from the same source but
+ * are listed separately below, at /articles. Every existing caller of
+ * listIssues() meant the newsletter archive, so the name keeps that meaning.
+ */
+async function everything(): Promise<IssueSummary[]> {
+  return getContentSource().listIssues();
 }
 
-/** Null for an unknown slug. Callers turn that into a 404. */
+/** Briefings, newest first. `limit` caps the result. */
+export async function listIssues(limit?: number): Promise<IssueSummary[]> {
+  const briefings = (await everything()).filter((post) => post.kind === 'briefing');
+  return typeof limit === 'number' ? briefings.slice(0, limit) : briefings;
+}
+
+/** A briefing, or null — including for the slug of an article, which lives at /articles. */
 export async function getIssue(slug: string): Promise<Issue | null> {
-  return getContentSource().getIssue(slug);
+  const post = await getContentSource().getIssue(slug);
+  return post && post.kind === 'briefing' ? post : null;
+}
+
+// ---------------------------------------------------------------------------
+// Articles and long-term reviews
+// ---------------------------------------------------------------------------
+
+/** Newest first. Omit `kind` for both. */
+export async function listArticles(
+  kind?: Exclude<PostKind, 'briefing'>,
+  limit?: number,
+): Promise<IssueSummary[]> {
+  const posts = (await everything()).filter((post) =>
+    kind ? post.kind === kind : post.kind === 'article' || post.kind === 'review',
+  );
+  return typeof limit === 'number' ? posts.slice(0, limit) : posts;
+}
+
+/** An article or review, or null — including for a briefing's slug. */
+export async function getArticle(slug: string): Promise<Issue | null> {
+  const post = await getContentSource().getIssue(slug);
+  return post && post.kind !== 'briefing' ? post : null;
+}
+
+export async function listArticleSlugs(): Promise<string[]> {
+  return (await listArticles()).map((post) => post.slug);
+}
+
+/** Previous/next among posts of the same kind, so a review leads to reviews. */
+export async function getArticleNeighbours(slug: string): Promise<IssueNeighbours> {
+  const current = await getArticle(slug);
+  if (!current) return { previous: null, next: null };
+  const posts = await listArticles(current.kind as Exclude<PostKind, 'briefing'>);
+  const index = posts.findIndex((post) => post.slug === slug);
+  return { previous: posts[index + 1] ?? null, next: posts[index - 1] ?? null };
 }
 
 /** Every slug, for generateStaticParams and the sitemap. */

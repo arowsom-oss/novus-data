@@ -18,15 +18,18 @@ export function SiteFooter() {
   ].filter((link): link is { href: string; label: string } => link !== null);
 
   return (
-    <footer className="mt-24 border-t border-hairline">
-      <Container className="py-12 sm:py-16">
+    <footer className="mt-24 border-t border-hairline print:mt-8">
+      <Container className="py-12 sm:py-16 print:py-5">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between md:gap-16">
           <div className="max-w-sm">
             <Wordmark className="text-[1.125rem]" />
             <p className="mt-3 text-[0.9375rem] text-muted">{publication.shortDescription}</p>
           </div>
 
-          <div className="flex flex-col gap-8 sm:flex-row sm:gap-16">
+          {/* Hidden in print. Everything in here is a link, and a link is
+              the one thing paper cannot honour — whereas the wordmark and the
+              disclaimer below are exactly what a forwarded page needs. */}
+          <div className="flex flex-col gap-8 sm:flex-row sm:gap-16 print:hidden">
             <nav aria-label="Footer">
               {/* min-h-11 keeps every standalone link a 44px tap target. */}
               <ul className="flex flex-col">
@@ -47,10 +50,7 @@ export function SiteFooter() {
               <ul className="flex flex-col">
                 {externalLinks.map((link) => (
                   <li key={link.href}>
-                    <ExternalLink
-                      href={link.href}
-                      className="inline-flex min-h-11 items-center text-[0.9375rem]"
-                    >
+                    <ExternalLink standalone href={link.href} className="text-[0.9375rem]">
                       {link.label}
                     </ExternalLink>
                   </li>

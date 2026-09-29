@@ -7,8 +7,14 @@ import path from 'node:path';
  * The TTFs are committed rather than fetched, for three reasons: the image
  * generator needs TTF or WOFF and next/font serves WOFF2; a build should not
  * depend on a third-party request succeeding; and the files are small because
- * they are the Latin subset. Newsreader is an SIL Open Font License face,
- * so redistributing it inside this repository is permitted.
+ * they are the Latin subset. IBM Plex is an SIL Open Font License family, so
+ * redistributing it inside this repository is permitted — the same basis on
+ * which Newsreader was committed before it.
+ *
+ * **These must stay the same family the site sets (§9).** A social card is the
+ * part of the site that travels furthest and is judged fastest, and a card in
+ * a different typeface from the page it links to reads as two different
+ * products. When the site's faces change, change these in the same commit.
  */
 const FONT_DIR = path.join(process.cwd(), 'src', 'assets', 'fonts');
 
@@ -16,16 +22,38 @@ function read(file: string): Buffer {
   return readFileSync(path.join(FONT_DIR, file));
 }
 
-export function serifFonts() {
+/**
+ * The faces every generated image is drawn with.
+ *
+ * Satori cannot read a variable font — it throws on the `fvar` table — so
+ * these are static instances, taken from Google Fonts' static endpoint and
+ * checked for the absence of `fvar` before being committed. Verify the same
+ * way if they are ever replaced.
+ *
+ * Plex Mono is here because figures on a card are set in it, exactly as they
+ * are on the page: it is the detail that makes a card look like it came from
+ * this site rather than from a template.
+ */
+export function cardFonts() {
   return [
-    // Newsreader publishes no static instances, and Satori cannot read a
-    // variable font — it throws on the fvar table. These two files were cut
-    // from the variable source with fontTools at wght 600/700 and opsz pinned
-    // to 60, the display end of the optical range, because they only ever
-    // render cards and icons at large sizes. Regenerate them the same way if
-    // the face is ever updated.
-    { name: 'Newsreader', data: read('Newsreader-SemiBold.ttf'), weight: 600 as const, style: 'normal' as const },
-    { name: 'Newsreader', data: read('Newsreader-Bold.ttf'), weight: 700 as const, style: 'normal' as const },
+    {
+      name: 'IBM Plex Sans',
+      data: read('PlexSans-SemiBold.ttf'),
+      weight: 600 as const,
+      style: 'normal' as const,
+    },
+    {
+      name: 'IBM Plex Sans',
+      data: read('PlexSans-Bold.ttf'),
+      weight: 700 as const,
+      style: 'normal' as const,
+    },
+    {
+      name: 'IBM Plex Mono',
+      data: read('PlexMono-SemiBold.ttf'),
+      weight: 600 as const,
+      style: 'normal' as const,
+    },
   ];
 }
 

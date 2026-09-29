@@ -29,7 +29,7 @@ export default async function DebugContentPage() {
 
   return (
     <Container className="py-14">
-      <h1 className="font-serif text-title font-semibold text-fg">Content diagnostics</h1>
+      <h1 className="text-title font-semibold text-fg">Content diagnostics</h1>
       <p className="mt-3 text-muted">
         Development only. Active source: <code>{getContentSourceName()}</code>. Reading{' '}
         <code>{diagnostics.directory}</code> — {diagnostics.fileCount} file
@@ -181,7 +181,7 @@ export default async function DebugContentPage() {
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-12">
-      <h2 className="font-serif text-heading font-semibold text-fg">{title}</h2>
+      <h2 className="text-heading font-semibold text-fg">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
   );

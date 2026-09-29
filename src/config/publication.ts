@@ -153,10 +153,11 @@ export const publication: Publication = {
 
   authors: [
     {
-      // The editor. NOT SUPPLIED: a production build refuses to run while
-      // this name is null — see assertLaunchReady() in ./input-ledger.ts.
+      // The editor, confirmed by him on 24 September 2026. A production build
+      // refuses to run while this name is null — see assertLaunchReady() in
+      // ./input-ledger.ts.
       id: 'editor',
-      name: null,
+      name: 'Gavin McGreevy',
       // Only statements that are true and checkable today belong here.
       credentials: [],
     },
@@ -230,6 +231,14 @@ export function hasCoAuthors(): boolean {
 export function authorById(id: string | null | undefined): AuthorProfile | null {
   if (!id) return null;
   return publication.authors.find((author) => author.id === id && author.name) ?? null;
+}
+
+/**
+ * Who recorded an entry: its named author, else the editor, who stands behind
+ * anything the publication prints. Null only while the editor is unnamed.
+ */
+export function recordedBy(id: string | null | undefined): AuthorProfile | null {
+  return authorById(id) ?? (editor().name ? editor() : null);
 }
 
 /**

@@ -125,6 +125,37 @@ export default function AboutPage() {
               relative &ldquo;three days ago&rdquo; would.
             </p>
           </div>
+
+          <div className="border-t border-hairline pt-6">
+            <h3 className="text-[1.0625rem] font-medium text-fg" id="live">
+              Live readings are not assessments
+            </h3>
+            <p className="mt-3">
+              The <TextLink href="/monitor">monitor</TextLink> shows raw readings from public
+              feeds, re-read every fifteen minutes: where news reporting of strikes, blockades,
+              sanctions and fighting is running above its own normal, ships heard at chokepoints,
+              natural hazards, port wind and energy prices. Each carries the name of its source, a
+              link to it, and the time the <em>source</em> produced the data, which is not the same
+              as when the page was built. Each is marked delayed or stale against that
+              source&rsquo;s own normal update cycle. A feed that fails shows as unavailable, with
+              the reason, and nothing is drawn in its place.
+            </p>
+            <p className="mt-3">
+              &ldquo;Above normal&rdquo; is measured, not judged: a place&rsquo;s share of all
+              reporting in the last three hours against its share in the same hours on each of the
+              previous seven days. It counts reporting, not events. A place counts only reporting
+              placed within its own stated radius, drawn to leave out large cities whose news is
+              not about it, and a city with no measurable normal is listed but never flagged.
+              Flags are published rules
+              firing on readings — every rule is printed on the monitor — and a flag is a reason to
+              look, not a finding.
+            </p>
+            <p className="mt-3">
+              None of it feeds the register or the exposure chart automatically. A reading becomes
+              a register entry only when it has been read, explained and sourced to the standard
+              above.
+            </p>
+          </div>
         </Section>
 
         <Section heading="Corrections" id="corrections">
@@ -205,7 +236,7 @@ function Section({
 }) {
   return (
     <section id={id}>
-      <h2 className="font-serif text-heading font-semibold text-fg">{heading}</h2>
+      <h2 className="text-heading font-semibold text-fg">{heading}</h2>
       <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">{children}</div>
     </section>
   );

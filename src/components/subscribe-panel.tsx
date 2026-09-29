@@ -32,7 +32,7 @@ export function SubscribePanel({
     >
       <h2
         id="subscribe-heading"
-        className="font-serif text-heading font-semibold text-fg"
+        className="text-heading font-semibold text-fg"
       >
         {heading}
       </h2>

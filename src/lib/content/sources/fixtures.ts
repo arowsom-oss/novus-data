@@ -37,6 +37,7 @@
  */
 
 import type { ContentSource, Issue } from '../types';
+import { kindFor } from '../types';
 
 if (process.env.NODE_ENV === 'production' && process.env.CONTENT_SOURCE === 'fixtures') {
   throw new Error(
@@ -94,6 +95,8 @@ interface FixtureRow {
   excerpt: string | null;
   externalUrl?: string | null;
   contentHtml?: string | null;
+  /** As they would arrive from Beehiiv. Decides the kind, exactly as for a real file. */
+  tags?: string[];
 }
 
 /**
@@ -240,19 +243,74 @@ const rows: FixtureRow[] = [
     excerpt: null,
     contentHtml: null,
   },
+
+  // Articles and long-term reviews for /articles. Tagged the way a post would
+  // be tagged in Beehiiv, so the kind comes through kindFor() like real data.
+  // One review has no excerpt and one article has no body, keeping the
+  // awkward cases this set exists for.
+  {
+    slug: 'sample-review-quarter',
+    issueNumber: null,
+    title: '[SAMPLE] A quarter of disruption, reviewed: what moved, what lasted, what faded',
+    publishedAt: '2026-09-20T08:00:00.000Z',
+    excerpt: '[SAMPLE] Placeholder standfirst for a long-term review, long enough to wrap in the list.',
+    contentHtml: SAMPLE_BODY,
+    tags: ['Long-term review'],
+  },
+  {
+    slug: 'sample-review-half-year',
+    issueNumber: null,
+    title: '[SAMPLE] Six months of chokepoint restrictions',
+    publishedAt: '2026-07-01T08:00:00.000Z',
+    excerpt: null,
+    contentHtml: SAMPLE_BODY,
+    tags: ['long-term review'],
+  },
+  {
+    slug: 'sample-article-canal',
+    issueNumber: null,
+    title: '[SAMPLE] Why a canal slot auction matters beyond shipping',
+    publishedAt: '2026-09-18T08:00:00.000Z',
+    excerpt: '[SAMPLE] Placeholder standfirst for an article.',
+    contentHtml: SAMPLE_BODY,
+    tags: ['Article'],
+  },
+  {
+    slug: 'sample-article-strike',
+    issueNumber: null,
+    title: '[SAMPLE] Reading a port strike before it starts',
+    publishedAt: '2026-09-10T08:00:00.000Z',
+    excerpt: '[SAMPLE] Placeholder standfirst for a short article.',
+    contentHtml: SHORT_BODY,
+    tags: ['Article', 'ports'],
+  },
+  {
+    slug: 'sample-article-no-body',
+    issueNumber: null,
+    title: '[SAMPLE] An article whose text is not stored here',
+    publishedAt: '2026-08-28T08:00:00.000Z',
+    excerpt: '[SAMPLE] Placeholder standfirst.',
+    externalUrl: 'https://example.invalid/p/sample-article-no-body',
+    contentHtml: null,
+    tags: ['article'],
+  },
 ];
 
-const fixtureIssues: Issue[] = rows.map((row) => ({
+const fixtureIssues: Issue[] = rows
+  .map((row) => ({
   slug: row.slug,
+  kind: kindFor(undefined, row.tags ?? []),
   issueNumber: row.issueNumber,
   title: row.title,
   publishedAt: row.publishedAt,
   excerpt: row.excerpt,
   externalUrl: row.externalUrl ?? null,
   coverImageUrl: null,
-  tags: [],
+  tags: row.tags ?? [],
   contentHtml: row.contentHtml ?? null,
-}));
+}))
+  // Newest first, as listIssues promises, now that articles are interleaved.
+  .sort((a, b) => (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0));
 
 export const fixturesSource: ContentSource = {
   async listIssues(limit) {

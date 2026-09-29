@@ -103,7 +103,7 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
         aria-labelledby={headingId}
         className="border border-hairline bg-surface p-7 sm:p-8"
       >
-        <h2 id={headingId} className="font-serif text-heading font-semibold text-fg">
+        <h2 id={headingId} className="text-heading font-semibold text-fg">
           Signed in
         </h2>
         <p className="mt-2 break-words text-meta text-muted">{signedInAs}</p>
@@ -131,7 +131,7 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
 
   return (
     <section aria-labelledby={headingId} className="border border-hairline bg-surface p-7 sm:p-8">
-      <h2 id={headingId} className="font-serif text-heading font-semibold text-fg">
+      <h2 id={headingId} className="text-heading font-semibold text-fg">
         Sign in
       </h2>
       <p className="mt-2 text-meta text-muted">

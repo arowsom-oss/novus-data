@@ -117,17 +117,16 @@ export function createSupabaseAccountRepository(
 
   return {
     async findById(id) {
-      const { data, error } = await client
-        .from('profiles')
-        .select('id, display_name, created_at')
-        .eq('id', id)
-        .maybeSingle<ProfileRow>();
+      const [{ data, error }, email] = await Promise.all([
+        client.from('profiles').select('id, display_name, created_at').eq('id', id).maybeSingle<ProfileRow>(),
+        emailFor(id),
+      ]);
 
       // Not-found and not-permitted are indistinguishable under RLS, and that
       // is the correct behaviour: it means one reader cannot probe for the
       // existence of another's account.
       if (error || !data) return null;
-      return assemble(data, await emailFor(id));
+      return assemble(data, email);
     },
 
     async findByEmail(email) {

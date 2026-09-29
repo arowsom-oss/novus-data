@@ -54,11 +54,21 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   /**
-   * Everything except static assets and the generated image routes. The
+   * Everything except static assets, feeds and the generated image routes. The
    * register, chart, entity and briefing pages still serve their prerendered
    * HTML — this only rotates a cookie alongside it.
+   *
+   * The image and feed exclusions are anchored with `.*` on the front on
+   * purpose. Written as a bare alternation they only matched at the start of
+   * the path, so `/opengraph-image` was excluded but
+   * `/disruptions/<id>/opengraph-image` was not — and every per-entry social
+   * card is nested. The effect was one `getUser()` round-trip to Supabase per
+   * card fetch, from Slack, LinkedIn and every other unfurler, none of which
+   * carry a cookie. Wasted latency and wasted auth traffic on the routes least
+   * able to benefit from a session, and invisible until accounts are switched
+   * on.
    */
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|opengraph-image|robots.txt|sitemap.xml|register.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|register.json|live.json|feed.json|(?:.*/)?(?:icon|apple-icon|opengraph-image|twitter-image)|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)$).*)',
   ],
 };

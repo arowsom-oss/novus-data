@@ -131,16 +131,6 @@ export function isIsoDate(value: string): boolean {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(value);
 }
 
-/**
- * Whole days between an ISO date and now. Negative for a future date, which is
- * worth surfacing rather than clamping — a review date in the future is a typo.
- */
-export function daysSince(iso: string, now: Date = new Date()): number | null {
-  const then = new Date(`${iso}T00:00:00Z`);
-  if (Number.isNaN(then.getTime())) return null;
-  return Math.floor((now.getTime() - then.getTime()) / 86_400_000);
-}
-
 // --- strings ----------------------------------------------------------------
 
 /**
@@ -158,8 +148,11 @@ export function slugify(value: string): string {
 }
 
 /** Quote a YAML scalar safely. Everything the scaffolder writes goes through this. */
-export function yamlString(value: string): string {
-  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+export function yamlString(value: string | null): string {
+  // JSON strings are valid YAML double-quoted scalars, escaping included —
+  // newlines too, which a hand-rolled escape would leave raw for YAML to
+  // fold into a space.
+  return value === null ? 'null' : JSON.stringify(value);
 }
 
 export function plural(count: number, one: string, many = `${one}s`): string {

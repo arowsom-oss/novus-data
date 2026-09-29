@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 import { footerNav } from '@/config/nav';
-import { listIssues } from '@/lib/content';
+import { listArticles, listIssues } from '@/lib/content';
 import { listDisruptions, listEntities } from '@/lib/disruptions';
 import { absoluteUrl } from '@/lib/env';
 import { toDate } from '@/lib/format';
@@ -12,8 +12,9 @@ import { toDate } from '@/lib/format';
  * no edit here (Rule 6).
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [issues, disruptions, entities] = await Promise.all([
+  const [issues, articles, disruptions, entities] = await Promise.all([
     listIssues(),
+    listArticles(),
     listDisruptions(),
     listEntities(),
   ]);
@@ -28,11 +29,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((href) => !href.startsWith('/debug'))
     .map((href) => ({
       url: absoluteUrl(href),
+      // /monitor is regenerated every fifteen minutes; saying so is what tells
+      // a crawler that yesterday's copy of it is not the page.
       changeFrequency:
-        href === '/' || href === '/disruptions' || href === '/exposure' || href === '/briefings'
-          ? 'weekly'
-          : 'monthly',
-      priority: href === '/' ? 1 : href === '/disruptions' || href === '/exposure' ? 0.9 : 0.7,
+        href === '/monitor'
+          ? 'hourly'
+          : href === '/' || href === '/disruptions' || href === '/exposure' || href === '/briefings'
+            ? 'weekly'
+            : 'monthly',
+      priority:
+        href === '/' ? 1 : href === '/disruptions' || href === '/exposure' || href === '/monitor' ? 0.9 : 0.7,
     }));
 
   const issueRoutes: MetadataRoute.Sitemap = issues.map((issue) => {
@@ -43,6 +49,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...(published ? { lastModified: published } : {}),
       changeFrequency: 'yearly' as const,
       priority: 0.8,
+    };
+  });
+
+  const articleRoutes: MetadataRoute.Sitemap = articles.map((article) => {
+    const published = toDate(article.publishedAt);
+    return {
+      url: absoluteUrl(`/articles/${article.slug}`),
+      ...(published ? { lastModified: published } : {}),
+      changeFrequency: 'yearly' as const,
+      priority: article.kind === 'review' ? 0.8 : 0.7,
     };
   });
 
@@ -70,5 +86,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  return [...staticRoutes, ...disruptionRoutes, ...entityRoutes, ...issueRoutes];
+  return [...staticRoutes, ...disruptionRoutes, ...entityRoutes, ...articleRoutes, ...issueRoutes];
 }

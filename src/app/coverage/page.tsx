@@ -33,10 +33,7 @@ export default function CoveragePage() {
                 <span data-numeric className="text-meta text-muted">
                   {String(index + 1).padStart(2, '0')}
                 </span>
-                <TextLink
-                  href={`#${topic.id}`}
-                  className="inline-flex min-h-11 items-center text-[0.9375rem]"
-                >
+                <TextLink standalone href={`#${topic.id}`} className="text-[0.9375rem]">
                   {topic.title}
                 </TextLink>
               </li>
@@ -50,7 +47,7 @@ export default function CoveragePage() {
           <section key={topic.id} id={topic.id} aria-labelledby={`${topic.id}-heading`}>
             <h2
               id={`${topic.id}-heading`}
-              className="font-serif text-heading font-semibold text-fg"
+              className="text-heading font-semibold text-fg"
             >
               {topic.title}
             </h2>

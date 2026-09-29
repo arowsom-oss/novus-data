@@ -16,7 +16,7 @@
  * answer would survive the loader. The validation here deliberately mirrors
  * `src/lib/disruptions/sources/local-files.ts`:
  *
- *   ID_PATTERN            lowercase, digits, single hyphens
+ *   ID_PATTERN            lowercase, digits, single hyphens (imported, not copied)
  *   sources               title + url + publisher, url must be http(s)
  *   exposure gate         mechanism, confidence, asOf, and >= 1 source
  *   entity                id, name, kind, sector — ticker may be null
@@ -28,6 +28,14 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+
+import {
+  CONFIDENCES,
+  DISRUPTION_CATEGORIES,
+  DISRUPTION_STATUSES,
+  ID_PATTERN,
+  SEVERITIES,
+} from '@/lib/disruptions/types';
 import {
   blank,
   colour,
@@ -43,20 +51,26 @@ import {
   type Prompter,
 } from './lib/cli';
 
-const DISRUPTIONS_DIR = path.join(process.cwd(), 'content', 'disruptions');
+/**
+ * Where entries are written.
+ *
+ * Respects NOVUS_DISRUPTIONS_DIR for the same reason `doctor` and `review` do:
+ * all three are author tooling reading and writing one register, and they have
+ * to agree about where it is. This used to hardcode `content/disruptions`, so
+ * with the override set in `.env.local` — which `loadEnvLocal()` reads — a
+ * freshly scaffolded entry landed in the real register while `doctor` and
+ * `review` were reading somewhere else, and the entry appeared to have
+ * vanished. Every path this script prints is relative to cwd, so an override
+ * is visible in the output rather than silent.
+ */
+const DISRUPTIONS_DIR = process.env.NOVUS_DISRUPTIONS_DIR
+  ? path.resolve(process.env.NOVUS_DISRUPTIONS_DIR)
+  : path.join(process.cwd(), 'content', 'disruptions');
 
-const STATUSES = ['watch', 'active', 'easing', 'resolved'] as const;
-const CATEGORIES = [
-  'chokepoint',
-  'port',
-  'policy',
-  'input',
-  'energy',
-  'labour',
-  'weather',
-] as const;
-const SEVERITIES = ['low', 'moderate', 'high'] as const;
-const CONFIDENCES = ['reported', 'inferred', 'estimated'] as const;
+// The register's own lists, so a new status or category reaches the prompts
+// in the same commit that teaches the loader about it.
+const STATUSES = DISRUPTION_STATUSES;
+const CATEGORIES = DISRUPTION_CATEGORIES;
 const KINDS = ['company', 'sector'] as const;
 
 /** What each confidence level actually commits you to, quoted from /about#method. */
@@ -96,6 +110,8 @@ interface DisruptionInput {
   id: string;
   /** An `id` from publication.authors, or null when nobody is named yet. */
   author: string | null;
+  /** Tracked place ids from src/lib/live/nodes.ts. Mirrors the loader: unknown ids are refused here. */
+  places: string[];
   title: string;
   shortLabel: string;
   status: (typeof STATUSES)[number];
@@ -194,7 +210,7 @@ async function askUrl(rl: Prompter, question: string): Promise<string> {
 }
 
 function validateId(value: string): string | null {
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)
+  return ID_PATTERN.test(value)
     ? null
     : 'Lowercase letters, digits and single hyphens only.';
 }
@@ -321,6 +337,7 @@ function render(entry: DisruptionInput): string {
     `updatedAt: ${yamlString(entry.updatedAt)}`,
     `summary: ${yamlString(entry.summary)}`,
     ...(entry.author ? [`author: ${yamlString(entry.author)}`] : []),
+    ...(entry.places.length > 0 ? [`places: [${entry.places.map((p) => yamlString(p)).join(', ')}]`] : []),
     'sources:',
     renderSources(entry.sources, '  '),
   ];
@@ -368,6 +385,11 @@ summary: "One or two plain sentences."
 # Who made this assessment — an id from publication.authors. Delete the line
 # on a one-author publication; it falls back to the editor either way.
 # author: "editor"
+
+# Tracked places this concerns, so the monitor's place board shows this entry
+# beside the live readings there. Optional. Ids are in src/lib/live/nodes.ts;
+# an unknown id is dropped with a warning.
+# places: ["suez", "bab-el-mandeb"]
 
 # At least one, or the whole entry is skipped.
 sources:
@@ -518,6 +540,24 @@ async function main(): Promise<void> {
       warn('No author is named in publication.authors yet — this entry will carry no byline.');
     }
 
+    // Places. Optional, and validated here exactly as the loader validates
+    // them, so a scaffolded entry never links a place that does not exist.
+    const { ALL_NODES } = await import('@/lib/live/nodes');
+    blank();
+    console.log(colour.dim('  Tracked places this concerns (optional). The monitor lists this entry beside them.'));
+    console.log(colour.dim(`  Ids: ${ALL_NODES.map((node) => node.id).join(', ')}`));
+    const placesAnswer = await ask(rl, 'Places, comma-separated', {
+      allowEmpty: true,
+      validate: (value) => {
+        const unknown = value
+          .split(',')
+          .map((part) => part.trim())
+          .filter((part) => part && !ALL_NODES.some((node) => node.id === part));
+        return unknown.length > 0 ? `Not tracked places: ${unknown.join(', ')}` : null;
+      },
+    });
+    const places = [...new Set(placesAnswer.split(',').map((part) => part.trim()).filter(Boolean))];
+
     heading('Sources for the disruption itself');
     console.log(colour.dim('  With none of these the whole entry is skipped.'));
     const sources = await askSources(rl, 'this disruption', 1);
@@ -545,6 +585,7 @@ async function main(): Promise<void> {
     const entry: DisruptionInput = {
       id,
       author,
+      places,
       title,
       shortLabel,
       status,
@@ -558,7 +599,8 @@ async function main(): Promise<void> {
 
     const contents = render(entry);
     const prefix = await nextPrefix();
-    const relative = path.join('content', 'disruptions', `${prefix}-${id}.md`);
+    const file = path.join(DISRUPTIONS_DIR, `${prefix}-${id}.md`);
+    const relative = path.relative(process.cwd(), file);
 
     heading(`About to write ${relative}`);
     console.log(colour.dim(contents.replace(/^/gm, '  ')));
@@ -569,7 +611,6 @@ async function main(): Promise<void> {
       return;
     }
 
-    const file = path.join(process.cwd(), relative);
     if (existsSync(file)) {
       warn(`${relative} already exists. Nothing written.`);
       return;

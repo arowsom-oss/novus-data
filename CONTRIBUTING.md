@@ -100,6 +100,10 @@ git push
 - A severity that the sources do not support. `estimated` exists for a reason —
   use it and say so.
 - Any figure not present in a cited source. **Empty is better than invented.**
+- A date written any way other than a quoted `"YYYY-MM-DD"`. The loader refuses
+  the rest, because looser forms are read differently than they are written.
+- An entity whose name, ticker or sector disagrees with how another file already
+  describes the same `entity.id`. `npm run doctor` names both files.
 
 ---
 
@@ -218,6 +222,48 @@ npm run check
 Typecheck, lint and doctor in one. If it is clean, the Vercel build will not
 fail for a reason you could have caught in ten seconds.
 
+### An optional permissions file for Claude Code
+
+The project's first repository (retired 24 September 2026) carried a
+`.claude/settings.json` that this one never had. It is kept here rather than
+switched on, because its `ask` rule makes every Claude session — each of
+ours — stop and wait for a click before each `git push`, which also pauses a
+session that is fixing a failing check. Its `deny` rules are worth having on
+their own: they stop Claude reading `.env` files, where the API keys live.
+To switch it on, save this as `.claude/settings.json` in a pull request we
+both agree to:
+
+```json
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run build)",
+      "Bash(npm run dev)",
+      "Bash(npm run lint *)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx create-next-app *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(npx vercel *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(rm -rf *)",
+      "Bash(git reset --hard *)"
+    ]
+  }
+}
+```
+
 ---
 
 ## Things that are settled, and why
@@ -235,6 +281,8 @@ is load-bearing. `CLAUDE.md` has the full reasoning.
 | It is `src/proxy.ts`, not `middleware.ts` | Next 16 renamed it. Every Supabase guide still shows the old name |
 | Feed discovery is a `<link>` element | As metadata it renders on zero routes, silently |
 | The alerts service lives in a separate repo | It is the component that has to stay up; merging it makes every notification change a deploy of the website |
+| Register dates are quoted `"YYYY-MM-DD"` strings | Unquoted, YAML rolls `2026-13-01` forward to `2027-01-01` before anything can check it. Quotes keep the text you wrote |
+| One entity id means one company | Two files describing the same id differently used to render one company under two tickers on the same page |
 
 ---
 

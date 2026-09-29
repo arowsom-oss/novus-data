@@ -18,7 +18,7 @@
 
 import path from 'node:path';
 
-import { blank, colour, daysSince, heading, info, loadEnvLocal, ok, plural, warn } from './lib/cli';
+import { blank, colour, heading, info, loadEnvLocal, ok, plural, warn } from './lib/cli';
 
 /** Entries this close to the window get flagged with `--due` as well. */
 const WARN_WITHIN_DAYS = 3;
@@ -27,7 +27,7 @@ async function main(): Promise<void> {
   loadEnvLocal();
 
   const { readDisruptionDiagnostics } = await import('@/lib/disruptions/sources/local-files');
-  const { STALE_AFTER_DAYS } = await import('@/lib/disruptions/types');
+  const { STALE_AFTER_DAYS, daysSince } = await import('@/lib/disruptions/types');
 
   const args = new Set(process.argv.slice(2));
   const dueOnly = args.has('--due');

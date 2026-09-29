@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-import { ogColors, serifFonts } from '@/lib/og';
+import { ogColors, cardFonts } from '@/lib/og';
 
 export const size = { width: 180, height: 180 };
 export const contentType = 'image/png';
@@ -17,7 +17,7 @@ export default function AppleIcon() {
           justifyContent: 'center',
           backgroundColor: ogColors.ink,
           color: ogColors.text,
-          fontFamily: 'Newsreader',
+          fontFamily: 'IBM Plex Sans',
           fontSize: 116,
           fontWeight: 600,
           letterSpacing: '-0.03em',
@@ -26,6 +26,6 @@ export default function AppleIcon() {
         N
       </div>
     ),
-    { ...size, fonts: serifFonts() },
+    { ...size, fonts: cardFonts() },
   );
 }

@@ -1,0 +1,57 @@
+# Reads every live feed once, for real, and reports what came back.
+#
+# Why this exists: the adapters in src/lib/live/sources/ were written in an
+# environment that could not reach any of the seven feeds, so their parsers
+# were checked against each publisher's documented shape and against
+# fixtures, never against a live response. GitHub's runners have open
+# internet. This runs the same `npm run live:check` a contributor would, and
+# its log is the first real evidence of what each feed actually returns.
+#
+# It never fails because a feed is down or rate-limited — that is the
+# publisher's state, not a defect in this change, and a job that went red on
+# someone else's outage would teach everyone to ignore it. It fails only if
+# the script itself crashes. Read the log, not the tick.
+#
+# AISSTREAM_API_KEY: optional. If a repository secret of that name exists,
+# the AIS sample runs too; otherwise that section reports "not configured".
+# The script prints only whether the key is set, never its value, and GitHub
+# masks secrets in logs as a second line of defence. Secrets are not passed
+# to pull requests from forks, so an outside PR cannot read it.
+name: live-check
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/lib/live/**"
+      - "scripts/live-check.ts"
+      - ".github/workflows/live-check.yml"
+
+concurrency:
+  group: live-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  live-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run live:check
+        env:
+          AISSTREAM_API_KEY: ${{ secrets.AISSTREAM_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          # No colour codes in a log file.
+          NO_COLOR: "1"

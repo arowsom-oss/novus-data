@@ -35,7 +35,7 @@ export default function AlertsPage() {
 
       <Container width="reading" className="mt-14 flex flex-col gap-12">
         <section>
-          <h2 className="font-serif text-heading font-semibold text-fg">What it will do</h2>
+          <h2 className="text-heading font-semibold text-fg">What it will do</h2>
           <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">
             <p>
               The register on this site already records what is going wrong and which companies it
@@ -52,7 +52,7 @@ export default function AlertsPage() {
         </section>
 
         <section>
-          <h2 className="font-serif text-heading font-semibold text-fg">What it will not do</h2>
+          <h2 className="text-heading font-semibold text-fg">What it will not do</h2>
           <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">
             <p>
               It will not send trade signals, price targets or recommendations. It is a change
@@ -69,7 +69,7 @@ export default function AlertsPage() {
         </section>
 
         <section>
-          <h2 className="font-serif text-heading font-semibold text-fg">Privacy</h2>
+          <h2 className="text-heading font-semibold text-fg">Privacy</h2>
           <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">
             <p>
               This site currently stores nothing about you — no analytics, no cookies of its own.
@@ -85,7 +85,7 @@ export default function AlertsPage() {
         </section>
 
         <section>
-          <h2 className="font-serif text-heading font-semibold text-fg">Until then</h2>
+          <h2 className="text-heading font-semibold text-fg">Until then</h2>
           <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">
             {available ? (
               <p>

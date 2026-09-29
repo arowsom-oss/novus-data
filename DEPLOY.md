@@ -371,3 +371,335 @@ after you have real readers, and the easiest to get quietly wrong.
 Unset `ACCOUNT_STORE` and redeploy. The site returns to its pre-launch state
 with no accounts, no cookie and no database calls. Nothing else has to change,
 which is the point of keeping the reading site static.
+
+## Part 5 — Live data and the AISStream key
+
+`/monitor` reads nine feeds and regenerates every fifteen minutes. **Seven need
+nothing from you**: GDELT, USGS, GDACS, NOAA NHC, NASA EONET, Open-Meteo and
+FRED work the moment the site is deployed. Vessel counts at ten chokepoints
+need a free AISStream key (this part); share prices need a licensed key and a
+decision (Part 6). Without it, that one panel says "not
+switched on yet" and everything else still works, so this is not a launch
+blocker.
+
+Steps 1–3 need an AISStream account and the Vercel dashboard, which are yours
+(Rule 7).
+
+### 1. Get the key
+
+1. Go to <https://aisstream.io> and sign in. (At the time of writing it offers
+   sign-in with a GitHub account; no payment details are asked for.)
+2. Open the **API Keys** page and create a key.
+3. Copy it. Treat it like a password: don't paste it into a chat, an email, a
+   screenshot or a commit. **If a key has already been pasted into a chat or a
+   shared conversation, delete it on the same page and create a fresh one** —
+   it costs nothing, and the old one can no longer be assumed private.
+
+### 2. Try it locally first
+
+In `.env.local` (git-ignored — never `.env.example`):
+
+```
+AISSTREAM_API_KEY=paste-the-key-here
+```
+
+Then:
+
+```
+npm run live:check
+```
+
+It reads every feed once, for real, and takes about 35 seconds. The AISStream
+section should report how many of the ten chokepoint boxes heard vessels. The
+other six sections should each say **Live** with a count. It never prints the
+key. If a feed reports a parse failure rather than an HTTP status, the
+publisher's response shape differs from what the adapter expects — note which
+one and it can be fixed in `src/lib/live/sources/`.
+
+> **The name is exactly `AISSTREAM_API_KEY`, with no `NEXT_PUBLIC_` prefix.**
+> That prefix would publish the key in every visitor's browser. The build
+> refuses to run if it sees `NEXT_PUBLIC_AISSTREAM_API_KEY`; if that ever
+> happens, rename it *and* create a new key at aisstream.io, because the old
+> one must be assumed public.
+
+### 3. Add it to Vercel
+
+1. Vercel → your project → **Settings → Environment Variables**.
+2. Key `AISSTREAM_API_KEY`, value the key. Tick **Production** (and **Preview**
+   if you want preview deployments to sample vessels too).
+3. **Redeploy.** Environment variables reach a deployment only when it is
+   built, so the running site will not see the key until you do.
+
+### 4. Check it works
+
+1. Open `/monitor`. Under **Feed status**, "Vessels heard at ten chokepoints"
+   should show a time and **Live**, not "Not switched on yet".
+2. `/live.json` should show `"ais": { "status": "ok", ... }`.
+3. Wait fifteen minutes and reload: the times should move. The page
+   regenerates on the first visit after each fifteen-minute window, so on a
+   quiet site the first visitor after a gap briefly sees the older copy.
+
+### Costs and limits worth knowing
+
+- **Open-Meteo is free for non-commercial use only.** The day the site takes
+  payment or runs ads, the weather panel needs Open-Meteo's paid plan, or
+  it has to be removed. Nothing else changes when that happens.
+- **Regeneration uses function time.** Each regeneration runs for about 35
+  seconds (the vessel sample is 30), at most once per fifteen minutes and only
+  when someone visits. That is well inside Vercel's Hobby allowance. The
+  route's `maxDuration` is 60 seconds.
+- **GDELT occasionally rate-limits.** Vercel's outbound addresses are shared
+  with other customers, so a theme can come back rate-limited through no fault
+  of this site. It shows as unavailable for one cycle, and the others still
+  render.
+
+### 5. Optional — let the automatic check test it too
+
+The `live-check` workflow reads every feed for real on each PR that touches the
+live layer. To include the vessel sample: GitHub → the repository → **Settings
+→ Secrets and variables → Actions → New repository secret**, name
+`AISSTREAM_API_KEY`, the same value. The workflow prints only whether the key
+is set, and GitHub masks secrets in logs.
+
+### Roll back
+
+Delete `AISSTREAM_API_KEY` in Vercel and redeploy. The vessel panel returns to
+"not switched on yet"; nothing else changes.
+
+## Part 6 — Share prices (a licensing decision first)
+
+Energy prices need nothing: they are public-domain U.S. government data. **Share
+prices are different.** Exchange prices are licensed, and every free API tier
+checked when this was built — Finnhub's included — is for personal,
+non-commercial use. A public website showing prices is redistribution. So the
+share-price panel is built, tested, and **off**.
+
+Your options, in order of honesty:
+
+1. **Leave it off.** The monitor is complete without it; energy prices and the
+   dollar are already there.
+2. **Buy a plan that licenses display**, or get Finnhub's written permission,
+   then switch it on as below.
+3. Switch it on with a free key anyway. Don't — it breaches the provider's
+   terms on a site whose whole claim is that it does things properly.
+
+To switch it on once licensed:
+
+1. Create a key in the Finnhub dashboard.
+2. Vercel → **Settings → Environment Variables** → `FINNHUB_API_KEY` (no
+   `NEXT_PUBLIC_` prefix — the build refuses one) → Production → **Redeploy**.
+3. `/monitor` → **Energy and markets → Share prices** should list five funds,
+   plus the ticker of every company on the exposure chart.
+
+Which funds are quoted is `src/config/markets.ts`. It lists funds rather than
+companies on purpose — see the comment there.
+
+---
+
+## Part 7 — Move the repository into a free organisation
+
+**Done 23 September 2026.** The organisation exists and the repository now
+lives at **`github.com/novus-data/novus-data`**; the steps below are kept as
+the record of how, and step 5 is the checklist for anything that still points
+at the old `Novous-Data/novus-data` address. `Novous-Data` remains the
+editor's personal login; it is no longer where the repository lives.
+
+**Why.** The repository belongs to a personal account (`Novous-Data`), and
+GitHub gives a personal account's collaborators one fixed level — *write* —
+with no way to make anyone else an admin. Settings, secrets, branch rulesets,
+collaborators and deletion all stay with that one login. An organisation has
+real roles, so both of us can be owners. GitHub Free for organisations costs
+nothing, and for a public repository it includes everything this project uses:
+Actions, secrets and rulesets.
+
+Every step needs your GitHub login (Rule 7). Signed in as `Novous-Data`:
+
+### 1. Turn on two-factor authentication — both of you, first
+
+github.com → avatar → **Settings → Password and authentication → Enable
+two-factor authentication**. An owner can delete everything, so the two logins
+become the only lock on the project. Alex does the same on `arowsom-oss`.
+
+### 2. Create the organisation
+
+Avatar → **Your organizations → New organization → Free**.
+
+- **Name.** GitHub says as you type whether a name is free. Try `novus-data`
+  first: the current account is spelled *Novous*, and this is the moment to
+  fix it. The name becomes the address — `github.com/<name>/novus-data`.
+- **Contact email.** Any address you read.
+- **"This organization belongs to"** → **My personal account.** The other
+  option, *A business or institution*, accepts GitHub's Corporate Terms on a
+  business's behalf. Choose it only once Novus Data is a registered legal
+  entity; you can switch later.
+- When asked to add members, add **`arowsom-oss`**. Alex receives an
+  invitation and must accept it.
+
+### 3. Make Alex an owner
+
+**Not done yet (checked 24 September 2026).** Alex's account, `arowsom-oss`,
+is on the repository as an *outside collaborator* with **write** access — the
+access the old personal account gave him, carried over by the transfer. He is
+not a member of the organisation, so he has no role there to change, and write
+cannot touch settings, secrets, rulesets or collaborators. Signed in as
+`Novous-Data`:
+
+1. Open **github.com/orgs/novus-data/people**.
+2. Click **Invite member**, type `arowsom-oss`, and pick him from the list.
+3. Choose the role **Owner** (not *Member*), then **Send invitation**.
+4. Alex, signed in as `arowsom-oss`, accepts — from the email GitHub sends,
+   or at **github.com/orgs/novus-data/invitation** → **Join novus-data**.
+   Invitations expire after seven days; resend from the same page if needed.
+5. Check: **People** now lists both of you with the role **Owner**. As an
+   owner Alex has admin on every repository in the organisation; his old
+   outside-collaborator entry is no longer needed.
+
+If GitHub instead offers to *convert* the outside collaborator to a member,
+that works too, provided the role chosen is **Owner**. You are already an
+owner as the creator.
+
+Once both of you have two-factor authentication on (step 1), require it for
+everyone: organisation **Settings → Authentication security → Require
+two-factor authentication**.
+
+**What owner means.** Either of you can change anything, including deleting
+the repository, deleting the organisation, and removing the other owner.
+That is what full access is, and it is the normal setup for two co-founders —
+GitHub also recommends at least two owners so an organisation is never lost
+with one account. Agree between you, in writing, that neither removes the
+other or deletes anything without asking first.
+
+### 4. Transfer the repository
+
+`github.com/Novous-Data/novus-data` → **Settings → General → Danger Zone →
+Transfer** → **Specific organization** → pick the new one → type the
+repository name to confirm.
+
+Code, branches, issues and pull requests — open ones included — move with it.
+GitHub redirects the old address, both in the browser and for `git`.
+
+### 5. Reconnect what pointed at the old address
+
+- **Claude Code on the web.** Its access was granted to the `Novous-Data`
+  account, not to the new organisation. Reconnect at claude.ai → **Settings →
+  Connectors → GitHub**, and when GitHub asks where to install, include the
+  new organisation and this repository. Until then, Claude sessions cannot
+  read or push to it.
+- **Vercel**, if the project is already imported: **Project → Settings → Git**.
+  If it shows disconnected, reconnect and allow the Vercel app on the
+  organisation.
+- **Local clones:** `git remote set-url origin
+  https://github.com/<name>/novus-data.git`. The redirect works today, but it
+  breaks for good if anyone ever creates a new `Novous-Data/novus-data`.
+
+Nothing in the code needs changing: no file in the repository contains its own
+address.
+
+### 6. Then make the workflow rule real
+
+With both of you owners, either can create the default-branch ruleset in
+CONTRIBUTING.md ("Make the first rule real"). It is the reason admin access
+was worth having.
+
+### 7. Delete the two leftover repositories
+
+Besides `novus-data/novus-data`, two other repositories exist. Both were read
+in full on 24 September 2026, every branch and commit, and neither holds
+anything the main repository needs:
+
+| Repository | What is in it | Where it went |
+|---|---|---|
+| `novus-data/demo-repository` (private) | GitHub's generated sample for a new organisation: a README welcoming you to it, a one-line `index.html`, a sample `package.json`, two example workflows, and a branch adding README badges. No Novus Data code. | Nothing to keep. |
+| `Novous-Data/Novous-Data` (private, personal account) | One commit from 1 September: a first `CLAUDE.md`, a `.gitignore` and `.claude/settings.json`. | The `.gitignore` is covered by the main one. The `CLAUDE.md`'s description of the project is out of date (it predates accounts, the register and the monitor); its working-style rules are now in CLAUDE.md §2. The settings file is in CONTRIBUTING.md, word for word, under "An optional permissions file". |
+
+**Delete by the exact name, and read it twice.** The names are one letter
+apart from the one that matters: keep **`novus-data/novus-data`**.
+
+For each of the two:
+
+1. Open its **Settings** page — `github.com/novus-data/demo-repository/settings`
+   and `github.com/Novous-Data/Novous-Data/settings`.
+2. Scroll to **Danger Zone** → **Delete this repository**.
+3. Confirm through GitHub's prompts, typing the full name when asked —
+   `novus-data/demo-repository`, then `Novous-Data/Novous-Data`.
+
+The first needs an organisation owner; the second only the `Novous-Data`
+login, which owns it. A deleted repository can normally be restored for 90
+days — organisation or account **Settings → Repositories → Deleted
+repositories** — so a mistake is recoverable if caught quickly, but do not
+rely on it.
+
+---
+
+## Part 8 — Set up Beehiiv and send the first issue
+
+Beehiiv is where the briefing is written and emailed. The site never talks to
+it at runtime: it needs three addresses from it, and the sync script copies
+each sent issue into `content/issues/` (Part 3). Every step here needs the
+Beehiiv login (Rule 7).
+
+### Before you start
+
+- **Terms and age.** Read Beehiiv's Terms of Use before signing up. If they
+  require account holders to be adults, a parent or guardian opens and owns the
+  account and adds you to it.
+- **A project email address.** Create one for Novus Data (a new Gmail is fine)
+  instead of using a personal address. It becomes the sign-up email, the
+  reply-to on every issue, and `NEXT_PUBLIC_CONTACT_EMAIL` on the site.
+- **A mailing address.** US anti-spam law (CAN-SPAM) requires a postal address
+  in the footer of commercial email, and Beehiiv asks for one. Every subscriber
+  will see it. Do not use a home address: use a PO box or a business address.
+
+### 1. Create the account and the publication
+
+beehiiv.com → **Sign up** with the project email → confirm the email → create a
+publication:
+
+- **Name:** `The Novus Data Briefing` — the name the site already uses
+  (`publication.newsletter.name`). Change both together if you change one.
+- **Subdomain:** short and permanent, e.g. `novusdata` → `novusdata.beehiiv.com`.
+- **Description:** the site's own sentence — "A written round-up of what moved
+  in the register, sent by email."
+
+Start on the free plan. Upgrade only when a feature is actually needed.
+
+### 2. Settings worth setting once
+
+- **Sender name** "The Novus Data Briefing", **reply-to** the project email.
+- **Mailing address** (see above).
+- **Double opt-in** on: subscribers confirm by email, which keeps the list real.
+- **Branding:** logo, and the site's colours — background `#070C20`, accent
+  `#7B92BE`, text `#F4F6FA` — so the email and the site read as one product.
+- **RSS feed:** find it in Settings (search the settings for "RSS") and turn it
+  on. The sync script needs it. If your plan does not offer it, tell Alex: issues
+  can still be added by hand, but that breaks the one-step rule and needs a fix.
+
+### 3. The three addresses the site needs
+
+| Where you find it | Becomes | Needed |
+|---|---|---|
+| The subscribe page — `https://<subdomain>.beehiiv.com/subscribe`; open it to check | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | **Yes, to launch** |
+| The publication's web address — `https://<subdomain>.beehiiv.com` | `NEXT_PUBLIC_BEEHIIV_HOME_URL` | Optional |
+| The RSS feed address from step 2 | `NEXT_PUBLIC_BEEHIIV_FEED_URL` on Vercel, and `BEEHIIV_RSS_URL` for the sync script | Optional for the site, required to sync |
+
+They go into Vercel as described in Part 1, step 4. None is a secret.
+
+### 4. Write and send the first issue
+
+**New post** → title, subtitle (it becomes the excerpt on the site) and body.
+Before sending:
+
+- **Send a test email** to yourself and read it on a phone.
+- Audience **free**, delivery **email and web**.
+- Check every figure has its source linked, every date is absolute, and nothing
+  claims staff, readers or results that do not exist (CLAUDE.md Rules 1 and 2).
+
+An article or long-term review is written the same way, with the content tag
+**Article** or **Long-term review** added so it files under `/articles`.
+
+### 5. Bring it into the site
+
+Run `npm run sync-issues` with `BEEHIIV_RSS_URL` set, review the new file in
+`content/issues/`, commit and push — Part 3. Do it soon after sending: the feed
+only keeps recent posts. The first real run also answers the four open questions
+in CLAUDE.md §10, which should be recorded there.

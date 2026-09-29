@@ -52,7 +52,7 @@ export default async function DisruptionsPage() {
                     </div>
 
                     <div>
-                      <h2 className="font-serif text-[1.1875rem] font-semibold leading-[1.25] text-fg transition-colors group-hover:text-link sm:text-[1.25rem]">
+                      <h2 className="text-[1.1875rem] font-semibold leading-[1.25] text-fg transition-colors group-hover:text-link sm:text-[1.25rem]">
                         {disruption.title}
                       </h2>
                       <p className="mt-1.5 max-w-[64ch] text-[0.9375rem] leading-[1.5] text-muted">

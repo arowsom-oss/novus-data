@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import Link from 'next/link';
 
-import { SeverityLegend } from '@/components/severity-legend';
+import { SeverityLegend, SeveritySwatch } from '@/components/severity-legend';
 import { StatusBadge } from '@/components/status-badge';
 import type { ExposureMatrix } from '@/lib/disruptions';
 // Types and labels come from ./types, which is pure data. The layer index
@@ -228,12 +228,7 @@ function ExposureList({ matrix }: { matrix: ExposureMatrix }) {
                     href={`/disruptions/${disruption.id}#entity-${row.entity.id}`}
                     className="flex gap-3"
                   >
-                    <span
-                      className="exposure-cell mt-0.5 !min-h-0 h-5 w-5 shrink-0"
-                      data-severity={exposure.severity}
-                      data-confidence={exposure.confidence}
-                      aria-hidden="true"
-                    />
+                    <SeveritySwatch severity={exposure.severity} confidence={exposure.confidence} className="mt-0.5 h-5 w-5 shrink-0" />
                     <span className="min-w-0">
                       <span className="block text-[0.9375rem] text-fg">{disruption.title}</span>
                       <span className="mt-0.5 block text-meta text-muted">

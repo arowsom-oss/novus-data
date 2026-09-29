@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 import { publication } from '@/config/publication';
-import { ogColors, ogSize, serifFonts } from '@/lib/og';
+import { ogColors, ogSize, cardFonts } from '@/lib/og';
 
 export const alt = `${publication.name} — ${publication.description}`;
 export const size = ogSize;
@@ -20,7 +20,7 @@ export default function OpengraphImage() {
           justifyContent: 'space-between',
           backgroundColor: ogColors.ink,
           padding: '72px 80px',
-          fontFamily: 'Newsreader',
+          fontFamily: 'IBM Plex Sans',
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -45,6 +45,6 @@ export default function OpengraphImage() {
         </div>
       </div>
     ),
-    { ...size, fonts: serifFonts() },
+    { ...size, fonts: cardFonts() },
   );
 }

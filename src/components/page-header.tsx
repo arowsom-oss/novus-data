@@ -27,7 +27,7 @@ export function PageHeader({
   return (
     <Container width={width} className="pt-10 sm:pt-14">
       {eyebrow ? <p className="kicker kicker-muted mb-3">{eyebrow}</p> : null}
-      <h1 className="max-w-[22ch] font-serif text-title font-semibold text-fg">{title}</h1>
+      <h1 className="max-w-[22ch] text-title font-semibold text-fg">{title}</h1>
       {lede ? (
         <div className="mt-3 max-w-reading text-subhead text-muted">{lede}</div>
       ) : null}

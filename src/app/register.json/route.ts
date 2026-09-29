@@ -1,6 +1,6 @@
-import { authorById, editor, hasCoAuthors, publication } from '@/config/publication';
+import { hasCoAuthors, publication, recordedBy } from '@/config/publication';
 import type { DisruptionSummary, Severity } from '@/lib/disruptions';
-import { SEVERITY_RANK, STALE_AFTER_DAYS, listDisruptions } from '@/lib/disruptions';
+import { STALE_AFTER_DAYS, listDisruptions, worstOf } from '@/lib/disruptions';
 import { absoluteUrl } from '@/lib/env';
 
 /**
@@ -86,14 +86,6 @@ interface NovusExtension {
   stale_after_days: number;
 }
 
-function worstSeverity(disruption: DisruptionSummary): Severity | null {
-  if (disruption.exposures.length === 0) return null;
-  return disruption.exposures.reduce<Severity>(
-    (worst, exposure) =>
-      SEVERITY_RANK[exposure.severity] > SEVERITY_RANK[worst] ? exposure.severity : worst,
-    'low',
-  );
-}
 
 /** ISO 8601 with an offset, which JSON Feed requires. Dates are day-precision. */
 function toTimestamp(day: string): string | undefined {
@@ -118,14 +110,12 @@ export async function GET() {
       const extension: NovusExtension = {
         status: disruption.status,
         category: disruption.category,
-        severity: worstSeverity(disruption),
+        severity: disruption.exposures.length > 0 ? worstOf(disruption.exposures) : null,
         entities: disruption.exposures.map((exposure) => exposure.entity.id),
         entityNames: Object.fromEntries(
           disruption.exposures.map((exposure) => [exposure.entity.id, exposure.entity.name]),
         ),
-        recordedBy: hasCoAuthors()
-          ? ((authorById(disruption.author) ?? (editor().name ? editor() : null))?.name ?? null)
-          : null,
+        recordedBy: hasCoAuthors() ? (recordedBy(disruption.author)?.name ?? null) : null,
         reviewedAt: disruption.updatedAt,
         startedAt: disruption.startedAt,
         stale_after_days: STALE_AFTER_DAYS,

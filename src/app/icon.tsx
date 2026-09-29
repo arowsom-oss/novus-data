@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-import { ogColors, serifFonts } from '@/lib/og';
+import { ogColors, cardFonts } from '@/lib/og';
 
 export const size = { width: 64, height: 64 };
 export const contentType = 'image/png';
@@ -22,7 +22,7 @@ export default function Icon() {
           justifyContent: 'center',
           backgroundColor: ogColors.ink,
           color: ogColors.text,
-          fontFamily: 'Newsreader',
+          fontFamily: 'IBM Plex Sans',
           fontSize: 44,
           fontWeight: 600,
           letterSpacing: '-0.03em',
@@ -31,6 +31,6 @@ export default function Icon() {
         N
       </div>
     ),
-    { ...size, fonts: serifFonts() },
+    { ...size, fonts: cardFonts() },
   );
 }

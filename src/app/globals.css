@@ -87,18 +87,19 @@
 }
 
 @theme {
-  /* Typefaces.
-     Newsreader carries everything editorial — headlines, ledes, register
-     summaries, issue bodies. Libre Franklin, a Franklin Gothic descendant and
-     the classic American newspaper sans, carries interface: navigation,
-     labels, metadata, buttons.
+  /* Typefaces. One family, plus its monospace sibling for figures.
 
-     That division is the point. On a news page the serif is what you READ and
-     the sans is what you OPERATE, and a publication that sets its body copy in
-     a UI sans reads as a web app about finance rather than a financial
-     publication. */
-  --font-serif: var(--font-serif-face), Iowan Old Style, Georgia, Times New Roman, serif;
+     This replaces a serif/sans split. §9 records the reversal and why; the
+     part that matters here is the division of labour that survived it:
+     WORDS are Plex Sans, FIGURES are Plex Mono. Not "data is mono" as a
+     flourish — every date, count, ticker and severity figure on this site
+     sits in a column with others like it, and a proportional face makes
+     those columns ragged. Mono makes them a table you can read down.
+
+     Plex Mono is deliberately NOT available for running text. A monospace
+     paragraph is a code block, and nothing here is code. */
   --font-sans: var(--font-sans-face), ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* Type scale.
      Pulled down deliberately. The old top end (4.125rem display, 2.75rem
@@ -107,32 +108,49 @@
      largest size for the lead story and sets everything else close to the
      text. Tracking is looser than before because Newsreader is drawn more
      openly than the previous face and over-tightened at the old values. */
+  /* Retuned for a sans. Two changes from the serif scale, both mechanical
+     rather than aesthetic:
+
+     Tracking goes NEGATIVE harder at the top and to zero at the bottom. Plex
+     Sans is drawn on a wider, more open chassis than Newsreader, so the same
+     letter-spacing that suited a serif headline leaves a sans headline loose
+     and unresolved. Below ~1.125rem it needs no negative tracking at all.
+
+     Line heights come DOWN slightly. A sans has no serifs bridging one glyph
+     to the next along the baseline, so the eye tracks a line more easily and
+     needs less leading to avoid doubling back. */
   --text-display: clamp(2.125rem, 1.5rem + 2.6vw, 3.25rem);
-  --text-display--line-height: 1.06;
-  --text-display--letter-spacing: -0.014em;
+  --text-display--line-height: 1.04;
+  --text-display--letter-spacing: -0.028em;
 
   --text-title: clamp(1.6875rem, 1.35rem + 1.5vw, 2.125rem);
-  --text-title--line-height: 1.14;
-  --text-title--letter-spacing: -0.011em;
+  --text-title--line-height: 1.12;
+  --text-title--letter-spacing: -0.022em;
 
   --text-heading: clamp(1.25rem, 1.15rem + 0.45vw, 1.4375rem);
-  --text-heading--line-height: 1.26;
-  --text-heading--letter-spacing: -0.007em;
+  --text-heading--line-height: 1.24;
+  --text-heading--letter-spacing: -0.014em;
 
   --text-subhead: 1.125rem;
-  --text-subhead--line-height: 1.52;
-  --text-subhead--letter-spacing: 0;
+  --text-subhead--line-height: 1.48;
+  --text-subhead--letter-spacing: -0.006em;
 
   --text-body: 1.0625rem;
-  --text-body--line-height: 1.6;
+  --text-body--line-height: 1.58;
 
-  /* The issue-page reading size, per the brand spec: 1.125rem / 1.75. */
+  /* The issue-page reading size. The brand spec's 1.125rem / 1.75 was set for
+     a serif; at the same size Plex Sans runs a shade wider per character and
+     reads loose at 1.75, so the leading comes in to 1.7. The size itself is
+     unchanged — that is the spec, and it is what makes long-form legible on a
+     dark ground without inverting the theme (§9). */
   --text-reading: 1.125rem;
-  --text-reading--line-height: 1.75;
+  --text-reading--line-height: 1.7;
 
+  /* Metadata and labels. Positive tracking, because this size is where a sans
+     gets cramped and because much of it is set in caps or small figures. */
   --text-meta: 0.8125rem;
   --text-meta--line-height: 1.45;
-  --text-meta--letter-spacing: 0.012em;
+  --text-meta--letter-spacing: 0.016em;
 
   /* Widths. `page` is the outer measure, `reading` the prose column, and
      `measure` the hard 66-character cap on long-form body text. */
@@ -173,33 +191,45 @@
     color: var(--text);
   }
 
-  /* Editorial text is set in the serif; interface text is not.
-     `p` and `li` are what a reader reads, so they take the serif by default.
-     Anything that is a control, a label or a piece of metadata opts back out
-     through .text-meta or by sitting inside nav/button, below. */
-  p,
-  li,
-  blockquote,
-  figcaption,
-  dd {
-    font-family: var(--font-serif);
-  }
+  /* There is no per-element font-family block any more, and that is the point
+     of the change §9 records: one family, set once on `body`, inherited
+     everywhere. The old serif/sans split needed two rules and an opt-out list
+     (`nav p`, `button`, `label`, `th`, `.text-meta`, `[data-ui]`) to keep
+     interface text out of the reading face. None of that has to exist now.
 
-  nav p,
-  nav li,
-  button,
-  label,
-  th,
-  .text-meta,
-  [data-ui] {
-    font-family: var(--font-sans);
-  }
+     What replaced the split is narrower and load-bearing: FIGURES are mono. */
 
-  /* Dates, counts and issue numbers align into true columns. Metadata is a
-     column of figures on a page like this, not running text. */
+  /* Dates, counts, tickers and issue numbers.
+     Mono is not decoration here. Every one of these sits in a column with
+     others like it — a <dl> of review dates, an "as of" column, a count of
+     names affected — and a proportional face makes those columns ragged
+     because its digits are not the same width. Mono plus tabular-nums makes
+     them a table the eye can read straight down.
+
+     Sized at 0.94em because Plex Mono is drawn considerably wider than Plex
+     Sans, so matched px sizes do not look matched; and tracked in slightly,
+     because a monospace face carries its own spacing already. */
   time,
-  [data-numeric],
-  .text-meta {
+  [data-numeric] {
+    font-family: var(--font-mono);
+    font-size: 0.94em;
+    letter-spacing: -0.012em;
+    /* A monospace word-space is a full character wide — roughly 0.6em against
+       a proportional face's 0.25em — so "09 Sept 2026" renders with visible
+       holes in it. Pulling word-spacing in is what makes a mono date read as
+       one value rather than three. Letter-spacing cannot do this job: it would
+       close the digits up too. */
+    word-spacing: -0.2em;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Metadata is running text that happens to contain figures, so it gets
+     tabular digits but NOT the mono face. A monospace paragraph is a code
+     block, and nothing on this site is code. */
+  .text-meta,
+  th,
+  td {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
   }
@@ -244,13 +274,17 @@
     --tw-prose-td-borders: var(--border);
 
     font-size: var(--text-reading);
-    line-height: 1.75;
+    /* 1.7 rather than 1.75, for the reason recorded at --text-reading: the
+       spec's leading was set for a serif and runs loose on Plex Sans. */
+    line-height: 1.7;
     max-width: var(--container-measure);
   }
 
+  /* No family switch: the whole page is one family now. Tracking tightens for
+     the sans, matching the scale in @theme. */
   .prose-novus :is(h2, h3, h4) {
-    font-family: var(--font-serif);
-    letter-spacing: -0.012em;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 
   .prose-novus h2 {
@@ -283,12 +317,17 @@
     text-decoration-color: var(--accent-text);
   }
 
+  /* A pull quote used to be marked by switching to the serif. With one family
+     that lever is gone, so it is marked the way a single-family design has to
+     mark things: weight and colour, not face. */
   .prose-novus blockquote {
     font-style: normal;
     border-left-width: 2px;
     padding-left: 1.25em;
-    font-family: var(--font-serif);
     font-size: 1.1875rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--text);
   }
 
   .prose-novus blockquote p:first-of-type::before,
@@ -338,11 +377,24 @@
    gives a broadsheet its structure.
    --------------------------------------------------------------------------- */
 
+/* The kicker moves to mono, and this is the single clearest signal of the
+   change. In print the letterspaced uppercase label is set in the paper's sans
+   because that is all a press had; on a terminal it is monospace, because a
+   terminal had nothing else. Setting it in Plex Mono is the detail that makes
+   a page read as an instrument rather than as a generic article layout —
+   which is the specific complaint this change exists to answer.
+
+   Tracking drops from 0.11em to 0.08em: a monospace face is already spaced
+   more openly than a proportional one, so the same value over-loosens it. */
 .kicker {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.08em;
+  /* Same correction as the figures above, and more necessary here: a two-word
+     kicker at +0.08em tracking on a monospace face otherwise breaks into two
+     unrelated labels. */
+  word-spacing: -0.18em;
   text-transform: uppercase;
   color: var(--accent-text);
   line-height: 1.3;
@@ -498,5 +550,140 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Print and PDF.
+
+   WHY THIS EXISTS. The site is dark by brand decision (§9), and a browser's
+   print dialog drops background colours unless the reader ticks the box. So
+   without this block a printed page is --text (#F4F6FA) on white paper — about
+   1.07:1, which is to say blank. That is not a cosmetic gap: an analyst who
+   PDFs a register entry to send to a colleague is the exact reader this site is
+   written for, and the page they forward is empty.
+
+   Everything here works by redefining the same tokens the screen design uses,
+   so there is no second set of rules to keep in step. Anything styled through
+   --ink / --surface / --text / --text-muted follows automatically.
+   --------------------------------------------------------------------------- */
+@media print {
+  :root {
+    /* Paper is the ground. --surface and --surface-2 collapse into it: raised
+       panels are a screen metaphor, and on paper the hairlines already divide
+       the page without spending toner on a fill. */
+    --ink: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #ffffff;
+    --border: rgba(0, 0, 0, 0.22);
+    --border-strong: #8b8b93;
+    --text: #101014;
+    --text-muted: #45454d;
+    --accent: #45597f;
+    --accent-text: #26375a;
+
+    /* ---------------------------------------------------------------------
+       Severity, inverted — and this is the one decision here that is not
+       mechanical.
+
+       §6a fixes the screen ramp dark → light as severity rises, because "the
+       lightest step has to be the one that reads as most" on a dark ground.
+       On white paper that ordering reverses: the lightest step becomes the one
+       that reads as LEAST, so shipping the screen ramp unchanged would make
+       the encoding say the opposite of what it means. This applies the same
+       principle to a light ground rather than inventing a second one.
+
+       Single-hue blue, hue spread 2°, monotone lightness, and the step nearest
+       the paper still clear of the 3:1 a non-text mark needs:
+
+         low      #7590BF   L* 59.1    3.27:1 on white
+         moderate #44608F   L* 40.6    6.33:1
+         high     #1E2C47   L* 18.9   13.60:1
+
+       L* gaps of 18.5 and 21.7 — monotone and roughly even, like the screen
+       ramp's. Stated as arithmetic rather than as a claim of equal rigour: the
+       screen ramp was validated as a set, this one mirrors its reasoning.
+
+       The texture channel above needs no change, and that is not luck. It
+       hatches in `var(--ink)` — the ground — so it is polarity-correct by
+       construction: dark hatching on light fills against a dark page, white
+       hatching on dark fills against paper.
+       --------------------------------------------------------------------- */
+    --sev-low: #7590bf;
+    --sev-moderate: #44608f;
+    --sev-high: #1e2c47;
+
+    /* Status dots never appear without their word beside them (§6a), so these
+       only have to be legible, not distinguishable from each other by hue. */
+    --status-active: #8a5b00;
+    --status-easing: #26375a;
+    --status-watch: #55555d;
+    --status-resolved: #6e6e76;
+
+    color-scheme: light;
+  }
+
+  @page {
+    margin: 18mm 16mm;
+  }
+
+  html,
+  body {
+    background: #ffffff;
+  }
+
+  /* The severity fill IS the datum, so it is the one thing on the page worth
+     overriding the reader's background preference for. The table below is
+     forced open in the same breath, so even a browser that ignores this
+     prints a complete page. */
+  .exposure-cell {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* The table view carries mechanism, confidence, as-of date and source count
+     in words — it is the version that works when colour does not, which on
+     paper is the version that matters most. It sits in a <details> that is
+     collapsed by default, so printing it today yields a summary line and no
+     table. Both selectors are here on purpose: the first is how current
+     Chromium exposes collapsed content, the second is the long-standing
+     fallback for engines without it. */
+  details > summary {
+    list-style: none;
+  }
+  details::details-content {
+    content-visibility: visible;
+    block-size: auto;
+  }
+  details:not([open]) > *:not(summary) {
+    display: block;
+  }
+
+  /* A source you cannot follow is not a source. The standard this site
+     publishes at /about#method is that every claim carries a followable URL —
+     a printed page that strips them fails that standard on its own terms. */
+  a[href^="http"]::after {
+    content: " <" attr(href) ">";
+    font-size: 0.85em;
+    word-break: break-all;
+    color: var(--text-muted);
+  }
+
+  /* Don't split a claim, a source or a row across a page break: half an
+     assessment on each side of a fold is how a reader misreads one. */
+  li,
+  tr,
+  dl {
+    break-inside: avoid;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  /* Decoration, and anything whose only job is on a screen. */
+  .grid-field {
+    display: none;
   }
 }

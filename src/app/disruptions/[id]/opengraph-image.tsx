@@ -4,7 +4,7 @@ import { publication } from '@/config/publication';
 import { getDisruption, listDisruptionIds } from '@/lib/disruptions';
 import { STATUS_LABELS } from '@/lib/disruptions/types';
 import { formatLongDate } from '@/lib/format';
-import { ogColors, ogSize, serifFonts } from '@/lib/og';
+import { ogColors, ogSize, cardFonts } from '@/lib/og';
 
 export const alt = `A tracked disruption from ${publication.name}`;
 export const size = ogSize;
@@ -47,7 +47,7 @@ export default async function DisruptionOpengraphImage({
           justifyContent: 'space-between',
           backgroundColor: ogColors.ink,
           padding: '64px 80px',
-          fontFamily: 'Newsreader',
+          fontFamily: 'IBM Plex Sans',
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -78,7 +78,18 @@ export default async function DisruptionOpengraphImage({
           {title}
         </div>
 
-        <div style={{ display: 'flex', gap: 48, fontSize: 26, color: ogColors.muted }}>
+        {/* The metadata row is the card's figures, so it takes Plex Mono — the
+            same rule the page applies to every date and count (§9). It is what
+            makes a card look like it came from this site. */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 44,
+            fontSize: 24,
+            color: ogColors.muted,
+            fontFamily: 'IBM Plex Mono',
+          }}
+        >
           {status ? <div style={{ display: 'flex' }}>{status}</div> : null}
           {reach > 0 ? (
             <div style={{ display: 'flex' }}>
@@ -89,6 +100,6 @@ export default async function DisruptionOpengraphImage({
         </div>
       </div>
     ),
-    { ...size, fonts: serifFonts() },
+    { ...size, fonts: cardFonts() },
   );
 }

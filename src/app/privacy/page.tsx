@@ -36,10 +36,17 @@ export default function PrivacyPage() {
       <Container width="reading" className="mt-12 flex flex-col gap-10">
         <Section heading="This site">
           <p>
-            The pages you read — the register, the exposure chart, the company and sector pages
-            and the briefing archive — are static files. They run no analytics, embed no tracking
-            pixels and load no third-party scripts. Nothing you do while reading is recorded by
-            Novus Data.
+            The pages you read — the register, the exposure chart, the monitor, the company and
+            sector pages and the briefing archive — are served as pre-built files. They run no
+            analytics, embed no tracking pixels and load no third-party scripts. Nothing you do
+            while reading is recorded by Novus Data.
+          </p>
+          <p>
+            The monitor is rebuilt on the server every fifteen minutes from public data feeds.
+            Your browser never contacts those feeds, so none of them learns anything about you.
+            While the monitor is open, it asks this site — and only this site — for a newer copy
+            every five minutes. Headlines on it link to other publishers&rsquo; websites, which
+            have their own privacy terms once you follow a link.
           </p>
           {accounts ? (
             <p>
@@ -171,7 +178,7 @@ export default function PrivacyPage() {
 function Section({ heading, children }: { heading: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="font-serif text-heading font-semibold text-fg">{heading}</h2>
+      <h2 className="text-heading font-semibold text-fg">{heading}</h2>
       <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">{children}</div>
     </section>
   );
