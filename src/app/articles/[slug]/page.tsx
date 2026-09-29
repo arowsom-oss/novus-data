@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { PostPage, postMetadata } from '@/components/post-page';
+import { monitorAndArticlesEnabled } from '@/config/launch';
 import { getArticle, getArticleNeighbours, listArticleSlugs } from '@/lib/content';
 
 /**
@@ -12,6 +13,7 @@ import { getArticle, getArticleNeighbours, listArticleSlugs } from '@/lib/conten
  * build with no network access still produces the complete site.
  */
 export async function generateStaticParams() {
+  if (!monitorAndArticlesEnabled) return [];
   const slugs = await listArticleSlugs();
   return slugs.map((slug) => ({ slug }));
 }
@@ -25,6 +27,7 @@ export async function generateMetadata(props: PageProps<'/articles/[slug]'>): Pr
 }
 
 export default async function ArticlePage(props: PageProps<'/articles/[slug]'>) {
+  if (!monitorAndArticlesEnabled) notFound();
   const { slug } = await props.params;
   const issue = await getArticle(slug);
   if (!issue) notFound();

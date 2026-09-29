@@ -7,6 +7,8 @@
  * whole of it, and sits after them.
  */
 
+import { monitorAndArticlesEnabled } from '@/config/launch';
+
 export interface NavItem {
   href: string;
   label: string;
@@ -24,11 +26,6 @@ export const primaryNav: NavItem[] = [
   { href: '/', label: 'Home' },
   { href: '/disruptions', label: 'Disruptions' },
   { href: '/exposure', label: 'Exposure' },
-  // The live page. In the header rather than the footer because it is the one
-  // page that is different every time it is opened — which is the reason a
-  // reader comes back, and so the reason it has to be one click away.
-  { href: '/monitor', label: 'Monitor' },
-  { href: '/articles', label: 'Articles' },
   { href: '/briefings', label: 'Briefings' },
   { href: '/about', label: 'About' },
 ];
@@ -36,12 +33,16 @@ export const primaryNav: NavItem[] = [
 /** Shown in the footer. A superset of the primary navigation. */
 export const footerNav: NavItem[] = [
   ...primaryNav,
+  ...(monitorAndArticlesEnabled
+    ? [
+        { href: '/monitor', label: 'Monitor' },
+        { href: '/articles', label: 'Articles' },
+      ]
+    : []),
   // Not in the header: the entity index is reached from the chart, which is
   // where a reader is when the question "what about this name" occurs to them.
   // A sixth header item to reach a seventh page would cost more than it earns.
   { href: '/entities', label: 'Companies' },
-  // Out of the header since Articles arrived: a page describing an app that
-  // does not exist yet earns less header room than published writing.
   { href: '/alerts', label: 'Alerts' },
   { href: '/coverage', label: 'Coverage' },
   { href: '/subscribe', label: 'Subscribe' },

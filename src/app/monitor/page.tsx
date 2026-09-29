@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import { Container } from '@/components/container';
+import { monitorAndArticlesEnabled } from '@/config/launch';
 import { AutoRefresh } from '@/components/live/auto-refresh';
 import { ChangingPanel } from '@/components/live/changing-panel';
 import { FlagList } from '@/components/live/flag-list';
@@ -34,6 +35,7 @@ import {
 } from '@/lib/live';
 import { formatCount, formatUtc, formatUtcDate, formatUtcShort } from '@/lib/live/display';
 import { readMonitor } from '@/lib/monitor';
+import { notFound } from 'next/navigation';
 
 /**
  * /monitor — the live page.
@@ -82,6 +84,8 @@ const SECTION_FOR: Record<keyof Omit<LiveSnapshot, 'generatedAt'>, string> = {
 };
 
 export default async function MonitorPage() {
+  if (!monitorAndArticlesEnabled) notFound();
+
   // The register supplies which entries name which places, and the tickers
   // of companies already on the exposure chart — see lib/monitor.ts.
   const { snapshot, flags, places, registerByPlace } = await readMonitor();

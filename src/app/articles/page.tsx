@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { Container } from '@/components/container';
+import { monitorAndArticlesEnabled } from '@/config/launch';
 import { IssueList } from '@/components/issue-list';
 import { PageHeader } from '@/components/page-header';
 import { StoryBox } from '@/components/story-box';
@@ -9,6 +10,7 @@ import { TextLink } from '@/components/text-link';
 import { publication } from '@/config/publication';
 import { listArticles } from '@/lib/content';
 import { absoluteUrl } from '@/lib/env';
+import { notFound } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Articles',
@@ -30,6 +32,8 @@ export const metadata: Metadata = {
  * reach production.
  */
 export default async function ArticlesPage() {
+  if (!monitorAndArticlesEnabled) notFound();
+
   const [reviews, articles] = await Promise.all([listArticles('review'), listArticles('article')]);
   const empty = reviews.length === 0 && articles.length === 0;
 

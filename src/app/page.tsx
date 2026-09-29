@@ -12,6 +12,7 @@ import { SectionLabel, StoryBox } from '@/components/story-box';
 import { SubscribePanel } from '@/components/subscribe-panel';
 import { TextLink } from '@/components/text-link';
 import { coverageTopics } from '@/config/coverage';
+import { monitorAndArticlesEnabled } from '@/config/launch';
 import { formatAuthorNames, publication } from '@/config/publication';
 import type { DisruptionSummary, EntityExposure } from '@/lib/disruptions';
 import { CATEGORY_LABELS, SEVERITY_LABELS, buildExposureMatrix, listDisruptions } from '@/lib/disruptions';
@@ -41,7 +42,7 @@ export default async function HomePage() {
     listDisruptions(),
     listIssues(3),
     buildExposureMatrix(),
-    listArticles(undefined, 3),
+    monitorAndArticlesEnabled ? listArticles(undefined, 3) : Promise.resolve([]),
   ]);
 
   const open = disruptions.filter((entry) => entry.status !== 'resolved');
@@ -156,23 +157,28 @@ export default async function HomePage() {
           </p>
         </StoryBox>
 
-        <StoryBox
-          className="lg:col-span-5"
-          kicker="The monitor"
-          title="What is changing now, from public feeds"
-          titleHref="/monitor"
-          footer={<TextLink href="/monitor">Open the monitor</TextLink>}
-        >
-          <p>
-            Where news reporting of strikes, blockades, sanctions and fighting is running above
-            its own normal, set beside natural hazards, port wind and energy prices, and re-read
-            every fifteen minutes. Every reading shows the time its source produced it, and a feed
-            that fails says so.
-          </p>
-        </StoryBox>
+        {/* Gated off for launch (src/config/launch.ts). A link, not a live
+            panel: reading the feeds here would put the home page on the
+            monitor's fifteen-minute regeneration cycle too. */}
+        {monitorAndArticlesEnabled ? (
+          <StoryBox
+            className="lg:col-span-5"
+            kicker="The monitor"
+            title="What is changing now, from public feeds"
+            titleHref="/monitor"
+            footer={<TextLink href="/monitor">Open the monitor</TextLink>}
+          >
+            <p>
+              Where news reporting of strikes, blockades, sanctions and fighting is running above
+              its own normal, set beside natural hazards, port wind and energy prices, and re-read
+              every fifteen minutes. Every reading shows the time its source produced it, and a
+              feed that fails says so.
+            </p>
+          </StoryBox>
+        ) : null}
 
         <StoryBox
-          className="lg:col-span-7"
+          className={monitorAndArticlesEnabled ? 'lg:col-span-7' : 'lg:col-span-12'}
           kicker={publication.newsletter.name}
           title="The week in writing, by email"
           titleHref="/briefings"
@@ -184,9 +190,10 @@ export default async function HomePage() {
           }
         >
           <p>
-            The briefing pulls the register and the monitor together: what moved, what it is likely
-            to reach next, and what is worth ignoring. The site is the record; the briefing is the
-            summary.
+            {monitorAndArticlesEnabled
+              ? 'The briefing pulls the register and the monitor together: what moved, what it is likely to reach next, and what is worth ignoring.'
+              : 'The briefing summarises the register: what moved, what it is likely to reach next, and what is worth ignoring.'}{' '}
+            The site is the record; the briefing is the summary.
           </p>
         </StoryBox>
       </Band>
