@@ -34,6 +34,10 @@ export const primaryNav: NavItem[] = [
 /** Shown in the footer. A superset of the primary navigation. */
 export const footerNav: NavItem[] = [
   ...primaryNav,
+  // Reachable from the home and About pages, but intentionally omitted from
+  // the primary header while the navigation is being simplified.
+  { href: '/monitor', label: 'Monitor' },
+  { href: '/articles', label: 'Articles' },
   // Not in the header: the entity index is reached from the chart, which is
   // where a reader is when the question "what about this name" occurs to them.
   // A sixth header item to reach a seventh page would cost more than it earns.
