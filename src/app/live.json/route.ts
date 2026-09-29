@@ -3,7 +3,6 @@ import { monitorAndArticlesEnabled } from '@/config/launch';
 import { absoluteUrl } from '@/lib/env';
 import { FLAG_RULES, LIVE_REVALIDATE_SECONDS, LIVE_SOURCE_IDS, PROXIMITY_KM, SOURCE_META } from '@/lib/live';
 import { readMonitor } from '@/lib/monitor';
-import { notFound } from 'next/navigation';
 
 /**
  * The live snapshot, machine-readable — the same data /monitor renders.
@@ -49,7 +48,7 @@ export const revalidate = 900;
 export const maxDuration = 60;
 
 export async function GET() {
-  if (!monitorAndArticlesEnabled) notFound();
+  if (!monitorAndArticlesEnabled) return new Response(null, { status: 404 });
 
   // Read exactly as /monitor reads it, so the app and the page can never
   // disagree about what is flagged.

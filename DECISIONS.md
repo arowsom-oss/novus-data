@@ -66,5 +66,5 @@ step 3).
 ## Deployment updates
 
 - The production sequence is **#9, then #12, then #11**. The integration branch is `claude/practical-einstein-tzfg55`; #12 must land before the production switch so the prelaunch sign-in notice remains present.
-- Monitor and Articles remain gated off for launch by `src/config/launch.ts`; enabling either is a new data-surface decision that requires Gavin and Alexander to agree and then updating this record.
+- Monitor and Articles remain gated off for launch by `src/config/launch.ts`; that includes `/live.json`, direct article URLs, and article entries in `/feed.json`. Enabling either is a new data-surface decision that requires Gavin and Alexander to agree and then updating this record.
 - The subscribe URL moved from `https://novusdata.beehiiv.com/subscribe` to `https://newsletter.novusdata.news/?modal=signup`; update any remaining documentation that names the old URL.

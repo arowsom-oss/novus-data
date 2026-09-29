@@ -40,10 +40,9 @@ see 4.12. It got stricter, because the site now names companies.
    chosen. `npm run build` names whichever inputs are missing. That is deliberate:
    a subscribe button that goes nowhere defeats the point of the site. (Section 4.)
 
-3. **`/privacy` is yours to check.** It describes how the site actually behaves
-   and is deliberately not drafted as a legal policy. Read it line by line before
-   the domain goes live. `src/app/privacy/page.tsx:16` carries the TODO.
-   (Section 8.)
+3. **`/privacy` describes the current deployment.** It is deliberately not
+   drafted as a legal policy, and it must be updated in the same change if the
+   site adds anything that collects information. (Section 8.)
 
 ---
 
@@ -700,8 +699,8 @@ the 404, at 320px, 390px, 1440px and 2560px:
 - `grep` for `we`/`our` in `src/`: zero hits in code (Rule 2).
 - `grep` for a hardcoded year in `src/`: zero in rendered output. The only matches
   are comments giving date-format examples and the fenced `[SAMPLE]` fixtures.
-- `grep` for `lorem`/`placeholder`/`example.com`/`TODO`: one intentional TODO
-  (`src/app/privacy/page.tsx:16`) and the fenced fixtures. Nothing else.
+- `grep` for `lorem`/`placeholder`/`example.com`/`TODO`: no intentional TODOs;
+  only the fenced fixtures contain those example markers. Nothing else.
 
 ### One honest caveat about offline builds
 
@@ -731,7 +730,6 @@ The complete list. There is nothing else.
 
 | File and line | What it is |
 |---|---|
-| `src/app/privacy/page.tsx:16` | **The one intentional TODO.** `/privacy` must be reviewed by you before the domain goes live. It describes real behaviour and is explicitly not a legal policy |
 | `src/config/publication.ts:109` | `author.credentials` is empty |
 | `src/config/publication.ts:93` | `cadence` is `null`; the site claims no schedule |
 | `src/config/publication.ts:96` | `firstIssueDate` is `null` |

@@ -4,6 +4,7 @@ import { Container } from '@/components/container';
 import { PageHeader } from '@/components/page-header';
 import { StoryBox } from '@/components/story-box';
 import { ExternalLink, TextLink } from '@/components/text-link';
+import { monitorAndArticlesEnabled } from '@/config/launch';
 import { publication } from '@/config/publication';
 import { absoluteUrl, accountsConfigured, env } from '@/lib/env';
 
@@ -13,14 +14,6 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl('/privacy') },
 };
 
-/*
- * TODO (must be reviewed by the publisher before the custom domain goes live):
- * This page is a plain description of how the site actually behaves today. It
- * is deliberately not drafted as a legal privacy policy, and it has not been
- * reviewed by anyone qualified to write one. If analytics, embeds, a comment
- * system or any third-party script is ever added, this page stops being
- * accurate the moment that change ships. See HANDOFF.md.
- */
 export default function PrivacyPage() {
   // The page describes what this deployment actually does. With no account
   // store configured there is genuinely nothing held, and saying otherwise
@@ -38,18 +31,21 @@ export default function PrivacyPage() {
       <Container width="reading" className="mt-8 flex flex-col gap-5">
         <Section heading="This site">
           <p>
-            The pages you read — the register, the exposure chart, the monitor, the company and
-            sector pages and the briefing archive — are served as pre-built files. They run no
+            The pages you read — the register, the exposure chart, the company and sector pages
+            and the briefing archive{monitorAndArticlesEnabled ? ', plus the monitor' : ''} — are
+            served as pre-built files. They run no
             analytics, embed no tracking pixels and load no third-party scripts. Nothing you do
             while reading is recorded by Novus Data.
           </p>
-          <p>
-            The monitor is rebuilt on the server every fifteen minutes from public data feeds.
-            Your browser never contacts those feeds, so none of them learns anything about you.
-            While the monitor is open, it asks this site — and only this site — for a newer copy
-            every five minutes. Headlines on it link to other publishers&rsquo; websites, which
-            have their own privacy terms once you follow a link.
-          </p>
+          {monitorAndArticlesEnabled ? (
+            <p>
+              The monitor is rebuilt on the server every fifteen minutes from public data feeds.
+              Your browser never contacts those feeds, so none of them learns anything about you.
+              While the monitor is open, it asks this site — and only this site — for a newer copy
+              every five minutes. Headlines on it link to other publishers&rsquo; websites, which
+              have their own privacy terms once you follow a link.
+            </p>
+          ) : null}
           {accounts ? (
             <p>
               One cookie exists, and only after you sign in: a session cookie set by Supabase, the
@@ -117,15 +113,14 @@ export default function PrivacyPage() {
             </p>
           </Section>
         ) : (
-          <Section heading="Accounts">
+          <Section heading="Accounts are not open">
             <p>
-              The home page has an accounts panel. On this deployment it is a notice, not a form:
-              no account store is configured, there is nothing to type into, and it makes no
-              network request.
+              The home page says accounts are not open yet. There is no sign-in form on this
+              deployment, and nothing about you is collected for accounts.
             </p>
             <p>
-              It exists so the signed-in experience can be designed before it is switched on. When
-              accounts are live, this page describes exactly what is held and why — in the same
+              The signed-in experience can be designed before accounts are switched on. When
+              accounts go live, this page will describe exactly what is held and why in the same
               release, not afterwards.
             </p>
           </Section>
@@ -137,6 +132,10 @@ export default function PrivacyPage() {
             to Beehiiv, which sends the newsletter, stores the subscriber list and handles
             unsubscribes. Beehiiv&rsquo;s privacy policy governs what happens to it from that
             point, and its terms are between you and Beehiiv.
+          </p>
+          <p>
+            The signup page at newsletter.novusdata.news is run by Beehiiv on our domain; it is
+            not part of this site.
           </p>
           <p>
             <ExternalLink standalone href="https://www.beehiiv.com/privacy">
