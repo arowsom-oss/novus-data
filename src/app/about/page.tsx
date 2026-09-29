@@ -5,6 +5,7 @@ import { NeedsInput } from '@/components/needs-input';
 import { PageHeader } from '@/components/page-header';
 import { SubscribePanel } from '@/components/subscribe-panel';
 import { MailLink, TextLink } from '@/components/text-link';
+import { monitorAndArticlesEnabled } from '@/config/launch';
 import {
   formatAuthorNames,
   hasCoAuthors,
@@ -126,7 +127,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="border-t border-hairline pt-6">
+          {monitorAndArticlesEnabled ? <div className="border-t border-hairline pt-6">
             <h3 className="text-[1.0625rem] font-medium text-fg" id="live">
               Live readings are not assessments
             </h3>
@@ -155,7 +156,7 @@ export default function AboutPage() {
               a register entry only when it has been read, explained and sourced to the standard
               above.
             </p>
-          </div>
+          </div> : null}
         </Section>
 
         <Section heading="Corrections" id="corrections">

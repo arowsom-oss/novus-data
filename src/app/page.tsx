@@ -14,6 +14,7 @@ import { SignInPanel } from '@/components/sign-in-panel';
 import { SubscribePanel } from '@/components/subscribe-panel';
 import { TextLink } from '@/components/text-link';
 import { coverageTopics } from '@/config/coverage';
+import { monitorAndArticlesEnabled } from '@/config/launch';
 import { formatAuthorNames, publication } from '@/config/publication';
 import type { DisruptionSummary, EntityExposure } from '@/lib/disruptions';
 import { CATEGORY_LABELS, SEVERITY_LABELS, buildExposureMatrix, listDisruptions } from '@/lib/disruptions';
@@ -34,7 +35,7 @@ export default async function HomePage() {
     listDisruptions(),
     listIssues(3),
     buildExposureMatrix(),
-    listArticles(undefined, 3),
+    monitorAndArticlesEnabled ? listArticles(undefined, 3) : Promise.resolve([]),
   ]);
 
   const open = disruptions.filter((entry) => entry.status !== 'resolved');
@@ -151,7 +152,7 @@ export default async function HomePage() {
 
       {/* Only once something is published: an empty "latest analysis" block
           is a promise, and this page makes none. */}
-      {analysis.length > 0 ? (
+      {monitorAndArticlesEnabled && analysis.length > 0 ? (
         <Container className="mt-12 sm:mt-16">
           <SectionHeading id="analysis">Latest analysis</SectionHeading>
           <div className="mt-6">
@@ -440,15 +441,19 @@ function WhatWeDo() {
       body: 'The part nobody else does. Every tracked problem is mapped to the companies and sectors it reaches, with the mechanism written out — not "affected", but how. A claim without a mechanism, a confidence level, a date and a source cannot appear on the chart at all. That is enforced in code.',
       cta: 'Open the chart',
     },
-    {
-      // A link, not a live panel. Reading the feeds here would put the home
-      // page on the fifteen-minute regeneration cycle too, doubling the calls
-      // to every publisher for a preview of a page one click away.
-      href: '/monitor',
-      title: 'The monitor',
-      body: 'Public feeds, re-read every fifteen minutes: where reporting of strikes, blockades, sanctions and fighting is running above its normal, flags at ports and straits, ships at ten chokepoints, hazards, port wind and energy prices. Every reading shows when its source produced it.',
-      cta: 'Open the monitor',
-    },
+    ...(monitorAndArticlesEnabled
+      ? [
+          {
+            // A link, not a live panel. Reading the feeds here would put the home
+            // page on the fifteen-minute regeneration cycle, doubling the calls
+            // to every publisher for a preview of a page one click away.
+            href: '/monitor',
+            title: 'The monitor',
+            body: 'Public feeds, re-read every fifteen minutes: where reporting of strikes, blockades, sanctions and fighting is running above its normal, flags at ports and straits, ships at ten chokepoints, hazards, port wind and energy prices. Every reading shows when its source produced it.',
+            cta: 'Open the monitor',
+          },
+        ]
+      : []),
     {
       href: '/briefings',
       title: 'The briefing',
@@ -461,9 +466,9 @@ function WhatWeDo() {
     <Container className="mt-12 sm:mt-16">
       <SectionHeading id="what-we-do">What we do at Novus Data</SectionHeading>
       <p className="mt-4 max-w-measure text-muted">
-        Four things, and they feed each other. The register records the problem, the chart says
-        who it lands on, the monitor shows what is moving now, and the briefing explains what it
-        means.
+        {monitorAndArticlesEnabled
+          ? 'Four things, and they feed each other. The register records the problem, the chart says who it lands on, the monitor shows what is moving now, and the briefing explains what it means.'
+          : 'Three things, and they feed each other. The register records the problem, the chart says who it lands on, and the briefing explains what it means.'}
       </p>
 
       {/* One link per pillar, wrapping the whole card: a larger target than a
