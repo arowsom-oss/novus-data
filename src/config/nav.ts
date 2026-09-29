@@ -27,8 +27,6 @@ export const primaryNav: NavItem[] = [
   // The live page. In the header rather than the footer because it is the one
   // page that is different every time it is opened — which is the reason a
   // reader comes back, and so the reason it has to be one click away.
-  { href: '/monitor', label: 'Monitor' },
-  { href: '/articles', label: 'Articles' },
   { href: '/briefings', label: 'Briefings' },
   { href: '/about', label: 'About' },
 ];
