@@ -34,11 +34,11 @@ see 4.12. It got stricter, because the site now names companies.
    never supplied are `null` and the site renders around their absence. Start at
    `INPUT_LEDGER` in that file — it is the to-do list. (Section 3 below.)
 
-2. **A production build fails on purpose right now.** Three inputs are
-   launch-critical — your name, the subscribe URL, the contact address — and
-   `npm run build` refuses to run while any is missing, naming exactly what to
-   fill in. That is deliberate: an about page with no author defeats the point of
-   the site. (Section 4.)
+2. **A production build fails on purpose right now.** The editor's name is
+   confirmed. The Beehiiv publication exists, but its subscribe URL must be
+   configured through the environment. The public contact address is not yet
+   chosen. `npm run build` names whichever inputs are missing. That is deliberate:
+   a subscribe button that goes nowhere defeats the point of the site. (Section 4.)
 
 3. **`/privacy` is yours to check.** It describes how the site actually behaves
    and is deliberately not drafted as a legal policy. Read it line by line before
@@ -89,14 +89,12 @@ and the review preview's panel, so this list cannot silently go stale.
 ### Blocks a production build
 
 The editor's name is supplied: **Gavin McGreevy**, confirmed 24 September
-2026. The other two were supplied on 27 September 2026 and pass the build
-guard locally; what remains is entering them on Vercel (DEPLOY.md Part 1,
-step 4), because environment values are never committed.
+2026. Two inputs remain.
 
-| Input | Where | Status |
+| Input | Where | What I need |
 |---|---|---|
-| Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | `https://novusdata.beehiiv.com/subscribe` — set it on Vercel |
-| Contact email | `NEXT_PUBLIC_CONTACT_EMAIL` | A temporary personal address — set it on Vercel, and swap in a project address before the site is shared |
+| Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | Supply the real Beehiiv subscribe page through the environment |
+| Contact email | `NEXT_PUBLIC_CONTACT_EMAIL` | The address you are content to publish |
 
 ### Drafted by me — confirm or rewrite
 
@@ -116,11 +114,9 @@ step 4), because environment values are never committed.
 | Author bio facts (`author.credentials`) | `/about` states nothing about you beyond your name |
 | Publishing cadence (`cadence`) | Subscribe blocks say "Delivered by email. Free." and claim **no schedule**. Set it only once you are actually keeping one |
 | First issue date (`firstIssueDate`) | The pre-launch hero announces no date |
-| `NEXT_PUBLIC_BEEHIIV_FEED_URL` | The footer's RSS link does not render. (The home URL is supplied: `https://novusdata.beehiiv.com`) |
+| `NEXT_PUBLIC_BEEHIIV_HOME_URL`, `NEXT_PUBLIC_BEEHIIV_FEED_URL` | Those footer links do not render |
 | `NEXT_PUBLIC_SITE_URL` | Falls back to `$VERCEL_URL`, then localhost. Set it at domain cutover |
 | `BEEHIIV_RSS_URL` | **The archive is empty and the feed was never inspected.** See 6 |
-| `AISSTREAM_API_KEY` | The chokepoint vessel panel on `/monitor` says "not switched on yet"; the keyless feeds work without it. Free key — DEPLOY.md Part 5 |
-| `FINNHUB_API_KEY` | Share prices stay off. A licensing decision, not a missing input — DEPLOY.md Part 6 |
 | Logo file | Wordmark and icons are set typographically. See 4.4 |
 | Three visual reference sites | Design follows the brand spec and the editorial references named in the brief |
 
@@ -231,12 +227,6 @@ The palette did not change at all. What changed:
   sans is what you operate, so `p`/`li`/`blockquote` take the serif in
   `@layer base` and controls take the sans back. Setting body copy in a UI sans
   was the loudest single tell.
-
-  > **Superseded.** The author later replaced this split with a single family —
-  > IBM Plex Sans throughout, IBM Plex Mono for figures. The argument above
-  > still holds *about Inter*, which was the actual tell; it does not hold
-  > against a sans with an opinion. **§9 is the current state; this section is
-  > history.** Do not restore the serif from here.
 - **Inter was specifically the problem.** It is the face a generated page
   reaches for.
 - **The scale came down**, not just across — 4.125rem display to 3.25rem. The
@@ -254,69 +244,6 @@ site no longer uses. See §4.5 for how the replacement statics were produced.
 described the committed TTFs as Source Serif after they had been replaced.
 Caught on the next review rather than by the build, because a comment cannot
 fail a typecheck.
-
-### 4.25 Live data: a monitor, re-read every fifteen minutes
-
-Asked for directly — "I don't want a static site, I want updates and close to
-real time data", then "use GDELT and AIS… make the update period every 15 min
-and incorporate as much as possible". CLAUDE.md §6d has the full design; the
-decisions that would be expensive to reverse:
-
-- **Age comes from inside the data, never our clock**, and is computed in the
-  reader's browser. A cached page can be old; it cannot claim to be new.
-- **Seven feeds, not two** (nine since 4.26). GDELT and AIS as asked, plus five official,
-  keyless sources that fill the obvious gaps: USGS earthquakes, GDACS disaster
-  alerts, NOAA hurricanes, NASA EONET natural events, and Open-Meteo port wind.
-- **ISR at fifteen minutes, not live per request.** A thousand readers cost
-  each publisher one request per cycle. A per-request design would breach
-  GDELT's rate limit on the first busy afternoon.
-- **Raw readings, kept apart from the register.** Nothing on the monitor feeds
-  the exposure chart automatically; the page says so, and so does
-  `/about#live`.
-- **Hazards are measured against places, never companies.** A distance to a
-  port is not an exposure claim, and §6a governs those.
-- **No history.** A vessel count means most against its own past, and keeping
-  a past needs a store. That is a decision about a database, left to you.
-
-**Verified from GitHub Actions, with one open question.** The build
-environment's network blocked all seven hosts, so a CI workflow now runs
-`npm run live:check` on a runner with open internet. First run: USGS, GDACS,
-NHC, EONET and Open-Meteo all parsed real responses. GDELT refused every
-request with a slow 429, which exposed a 78-second regeneration that would
-have failed a Vercel build; it is now bounded to about 32 seconds and stops at
-the first refusal. Whether GDELT will serve Vercel's shared IPs reliably is
-the open question — CLAUDE.md §6d has the findings and the fallback.
-
-**A lint bug found on the way.** Flat config replaces rather than merges two
-`no-restricted-imports` entries for one file, so the page/component boundary
-block had been silently switching off the "no RSS parser, no sanitiser under
-`src/`" rule for exactly the pages and components it protected. Fixed by
-defining each restriction once and spreading it into every block; probed with
-throwaway files to confirm every rule now fires.
-
-### 4.26 "What is changing", flags, places, prices, articles, and the app
-
-The author asked for the monitor to show what is changing rather than how
-much of the news is on each topic, to flag places with abnormal reporting, for
-stock and crude prices, an articles section with long-term reviews, two more
-features from existing data, and for all of it to work in the app.
-
-- **Change detection replaced topic shares**, on GDELT's raw event files
-  rather than its query API (which refused cloud servers twice). "Above
-  normal" is a place's share of reporting against the same hours on the
-  previous seven days. Method and thresholds are published on the page.
-- **The two features:** rule-based **flags** (every rule printed, each flag
-  with its reading's time and source) and a **place board** (every tracked
-  place, all readings plus linked register entries via a new optional
-  `places` field). Both computed from the same snapshot everywhere.
-- **Prices:** energy and the dollar from public-domain government data,
-  shipped. **Share prices built but off** — no free tier licenses public
-  display. DEPLOY.md Part 6 is the decision.
-- **Articles** are Beehiiv posts tagged "Article" or "Long-term review":
-  same sync, no new step. `/feed.json` lists every post for the app.
-- **The app prototype** (artifact, version 3) gained Live and Read screens,
-  opt-in live-flag alerts, and place following, all read from the site's real
-  feed formats; typography now matches the site.
 
 ## 4. Judgement calls I had to make
 
@@ -361,32 +288,27 @@ ignore it. Delete it or move it whenever you like; nothing depends on it.
 
 The brand palette is described in the brief as derived from an existing Novus Data
 logo, but the file was not supplied. The brief forbids redrawing or approximating
-it, so I did neither. The wordmark is set in IBM Plex Sans
-(`src/components/wordmark.tsx`) and `icon.tsx` / `apple-icon.tsx` generate the
-icons from the same treatment. It has carried three faces now — Source Serif 4,
-then Newsreader, now Plex Sans — because it follows whatever §9 currently sets.
-Deliberately not Plex Mono; §9 says why.
+it, so I did neither. The wordmark is set in Newsreader (`src/components/wordmark.tsx`)
+and `icon.tsx` / `apple-icon.tsx` generate the icons from the same treatment.
 
 **When you supply the real logo:** replace `wordmark.tsx`, and replace the two
 icon routes with the file. That is the whole change.
 
 ### 4.5 Font TTFs are committed to the repository
 
-`src/assets/fonts/` holds the TTFs behind the icons and social cards. The image
-generator needs TTF or WOFF and `next/font` serves WOFF2, so the font data has to
-come from somewhere. Committing it also means social card generation does not
-depend on a third-party request succeeding mid-build. Source Serif 4, Newsreader
-and the current IBM Plex are all SIL Open Font License, so redistribution inside
-the repository is permitted throughout.
+`src/assets/fonts/` holds two TTFs. The image generator behind the icons and
+social cards needs TTF or WOFF, and `next/font` serves WOFF2, so the font data has
+to come from somewhere. Committing it also means social card generation does not
+depend on a third-party request succeeding mid-build. Both the original Source
+Serif 4 and the current Newsreader are SIL Open Font License, so redistribution
+inside the repository is permitted.
 
-**Updated twice.** The files are now `PlexSans-SemiBold.ttf`,
-`PlexSans-Bold.ttf` and `PlexMono-SemiBold.ttf` — three rather than two, because
-figures on a card are set in mono exactly as they are on the page. Satori throws
-on a variable font's `fvar` table, so these are static instances taken from
-Google Fonts' static endpoint and checked for the absence of `fvar` before being
-committed. **Verify the same way if they are ever replaced** — a variable file
-here fails the build, not the lint. The helper that reads them is `cardFonts()`;
-it was `serifFonts()`, which stopped being a true name when the serif went.
+**Updated when the typography changed (§4.24).** The face is now Newsreader, and
+these two files are not shipped by Google — Newsreader publishes no static
+instances, and Satori throws on a variable font's `fvar` table. They were cut
+from the variable source with fontTools at wght 600/700, opsz pinned to 60. The
+method is recorded at the top of `src/lib/og.ts`; regenerate them the same way if
+the face is ever updated.
 
 ### 4.6 Cover images bypass `next/image`
 
