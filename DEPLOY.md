@@ -670,15 +670,17 @@ Start on the free plan. Upgrade only when a feature is actually needed.
 - **Double opt-in** on: subscribers confirm by email, which keeps the list real.
 - **Branding:** logo, and the site's colours — background `#070C20`, accent
   `#7B92BE`, text `#F4F6FA` — so the email and the site read as one product.
-- **RSS feed:** find it in Settings (search the settings for "RSS") and turn it
-  on. The sync script needs it. If your plan does not offer it, tell Alex: issues
-  can still be added by hand, but that breaks the one-step rule and needs a fix.
+- **RSS feed:** use the publication's own public feed,
+  `https://rss.beehiiv.com/feeds/q2HQCm9T6z.xml`. Do not search the settings for
+  "RSS" — that leads to the paid import screen, which is a different thing. The
+  sync script needs this feed. If it ever stops working, tell Alex: issues can
+  still be added by hand, but that breaks the one-step rule and needs a fix.
 
 ### 3. The three addresses the site needs
 
 | Where you find it | Becomes | Needed |
 |---|---|---|
-| The subscribe page — `https://<subdomain>.beehiiv.com/subscribe`; open it to check | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | **Yes, to launch** |
+| The signup on the custom domain — `https://newsletter.novusdata.news/?modal=signup`; open it and check the form appears | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | **Yes, to launch** |
 | The publication's web address — `https://<subdomain>.beehiiv.com` | `NEXT_PUBLIC_BEEHIIV_HOME_URL` | Optional |
 | The RSS feed address from step 2 | `NEXT_PUBLIC_BEEHIIV_FEED_URL` on Vercel, and `BEEHIIV_RSS_URL` for the sync script | Optional for the site, required to sync |
 
@@ -695,7 +697,9 @@ Before sending:
   claims staff, readers or results that do not exist (CLAUDE.md Rules 1 and 2).
 
 An article or long-term review is written the same way, with the content tag
-**Article** or **Long-term review** added so it files under `/articles`.
+**Article** or **Long-term review**. At launch these do not appear on the site:
+`/articles` is switched off (`src/config/launch.ts`), so the sync saves them but
+no page shows them. Turning it on needs both Gavin and Alex (`DECISIONS.md`).
 
 ### 5. Bring it into the site
 
@@ -707,7 +711,7 @@ first:
 npm run sync-issues -- --dry-run
 ```
 
-Review the output for warnings that an issue has no body. Stop and fix the feed
+Review the output for any line containing `has no content:encoded body`. Stop and fix the feed
 or the importer if one appears; the site needs the full issue text. If the dry
 run is clean, run `npm run sync-issues`, review the new files in
 `content/issues/`, commit and push — Part 3. Do it soon after sending: the feed
