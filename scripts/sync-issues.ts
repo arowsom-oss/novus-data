@@ -282,6 +282,28 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
   },
 };
 
+/**
+ * The src of every image in a sanitised body that has no alt attribute.
+ *
+ * A screen reader announces an image with no alt by reading out its file
+ * name, which for a newsletter CDN is a long hex string. An empty alt (`alt=""`)
+ * is a different, deliberate thing: it marks the image as decorative and
+ * screen readers skip it, so it is not reported here.
+ *
+ * Matching with a regular expression is safe only because this runs on
+ * sanitize-html's output, never the raw feed. By then every tag has been
+ * rebuilt from the allowlist: names are lowercase, values are double-quoted,
+ * and a `"` or `>` inside a value has been escaped. So `<img ...>` is always a
+ * real tag, and ` alt="` cannot appear inside some other attribute's value.
+ * Text that mentions "<img" has become "&lt;img" and cannot match either.
+ */
+function imagesWithoutAlt(html: string | null): string[] {
+  if (!html) return [];
+  return (html.match(/<img\b[^>]*>/g) ?? [])
+    .filter((tag) => !/\salt="/.test(tag))
+    .map((tag) => tag.match(/\ssrc="([^"]*)"/)?.[1] ?? '(image with no src)');
+}
+
 function sanitiseBody(html: string | null): string | null {
   if (!html) return null;
   const cleaned = sanitizeHtml(html, sanitizeOptions)
@@ -451,6 +473,16 @@ async function main(): Promise<void> {
     if (!body) {
       console.warn(
         `  warning: ${slug} has no content:encoded body. The feed may carry summaries only.`,
+      );
+    }
+    const noAlt = imagesWithoutAlt(body);
+    if (noAlt.length > 0) {
+      console.warn(
+        `  warning: ${slug} has ${noAlt.length} image${noAlt.length === 1 ? '' : 's'} with no alt text. ` +
+          'A screen reader will read out the file name instead.\n' +
+          '           Describe each one in Beehiiv (or mark it decorative), then re-sync with\n' +
+          `           npm run sync-issues -- --force ${slug}\n` +
+          noAlt.map((src) => `             ${src}`).join('\n'),
       );
     }
 
