@@ -4,8 +4,8 @@ import type { IssueSummary } from '@/lib/content';
 import { formatIssueNumber, formatShortDate } from '@/lib/format';
 
 /**
- * An archive row. A list, not a card — the archive is a sequence, and a
- * sequence reads as aligned columns.
+ * An archive row. Rows, not separate cards: the archive is a sequence, and a
+ * sequence reads as aligned columns inside one box.
  *
  * The issue number and date are set in tabular numerals and given fixed
  * columns from the small breakpoint up, so they form a true column down the
@@ -20,10 +20,10 @@ function IssueRow({ issue, basePath }: { issue: IssueSummary; basePath: string }
   const date = formatShortDate(issue.publishedAt);
 
   return (
-    <li className="border-t border-hairline">
+    <li>
       <Link
         href={`${basePath}/${issue.slug}`}
-        className={`group grid gap-x-6 gap-y-2 px-2 py-6 transition-colors hover:bg-surface sm:px-3 ${
+        className={`group -mx-3 grid gap-x-6 gap-y-2 px-3 py-5 transition-colors hover:bg-surface-2 ${
           numbered ? 'sm:grid-cols-[4.5rem_7rem_1fr]' : 'sm:grid-cols-[7rem_1fr]'
         }`}
       >
@@ -76,7 +76,9 @@ export function IssueList({
   basePath?: '/briefings' | '/articles';
 }) {
   return (
-    <ul aria-label={label} className="border-b border-hairline">
+    // The list sits in one story box, hairlines between its items: an archive
+    // is a sequence, so it stays one object rather than a stack of cards.
+    <ul aria-label={label} className="story story-list gap-0 py-2 sm:py-2">
       {issues.map((issue) => (
         <IssueRow key={issue.slug} issue={issue} basePath={basePath} />
       ))}

@@ -29,35 +29,30 @@ export function SiteFooter() {
           {/* Hidden in print. Everything in here is a link, and a link is
               the one thing paper cannot honour — whereas the wordmark and the
               disclaimer below are exactly what a forwarded page needs. */}
-          <div className="flex flex-col gap-8 sm:flex-row sm:gap-16 print:hidden">
-            <nav aria-label="Footer">
-              {/* min-h-11 keeps every standalone link a 44px tap target. */}
-              <ul className="flex flex-col">
-                {footerNav.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="inline-flex min-h-11 items-center text-[0.9375rem] text-muted transition-colors hover:text-fg"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-
-            {externalLinks.length > 0 ? (
-              <ul className="flex flex-col">
-                {externalLinks.map((link) => (
-                  <li key={link.href}>
-                    <ExternalLink standalone href={link.href} className="text-[0.9375rem]">
-                      {link.label}
-                    </ExternalLink>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
+          <nav aria-label="Footer" className="print:hidden">
+            {/* Columns rather than one long list: thirteen links stacked in a
+                single column read as a sitemap dump. min-h-11 keeps every link
+                a 44px tap target. */}
+            <ul className="grid grid-cols-2 gap-x-10 sm:grid-cols-3">
+              {footerNav.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="inline-flex min-h-11 items-center text-[0.9375rem] text-muted transition-colors hover:text-fg"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              {externalLinks.map((link) => (
+                <li key={link.href}>
+                  <ExternalLink standalone href={link.href} className="text-[0.9375rem]">
+                    {link.label}
+                  </ExternalLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
 
         <div className="mt-12 border-t border-hairline pt-6">

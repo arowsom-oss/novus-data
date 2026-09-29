@@ -65,96 +65,92 @@ export function PostPage({ post, previous, next }: { post: Issue } & IssueNeighb
     <article>
       <JsonLd data={issueJsonLd(post, canonicalFor(post))} />
 
-      <Container width="reading" className="pt-10 sm:pt-14">
+      <Container width="reading" className="pt-8 sm:pt-12">
         <p className="text-meta text-muted">
           <TextLink href={briefing ? '/briefings' : '/articles'} className="no-underline hover:underline">
             {briefing ? 'Briefings' : 'Articles'}
           </TextLink>
         </p>
 
-        {briefing ? (
-          <h1 className="mt-6 text-title font-semibold text-fg">{post.title}</h1>
-        ) : (
-          <>
-            <p className="kicker mt-6">{kindLabel}</p>
-            <h1 className="mt-2 text-title font-semibold text-fg">{post.title}</h1>
-          </>
-        )}
+        {/* The whole piece is one boxed story: headline, standfirst, metadata
+            and body all sit on the same backing, as the front page's boxes do. */}
+        <div className="story story-lead mt-4">
+          <header>
+            <p className="kicker">{briefing ? publication.newsletter.name : kindLabel}</p>
+            <h1 className="mt-3 text-title font-semibold text-fg">{post.title}</h1>
 
-        {post.excerpt ? (
-          <p className="mt-6 max-w-measure text-subhead text-muted">{post.excerpt}</p>
-        ) : null}
-
-        {/* A rule here divides the metadata from the body — it is dividing two
-            real things, which is the only reason this site draws a rule. */}
-        <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-3 border-t border-hairline pt-5 text-meta">
-          {number ? (
-            <div>
-              <dt className="text-muted">Issue</dt>
-              <dd data-numeric className="mt-0.5 text-fg">
-                {number}
-              </dd>
-            </div>
-          ) : null}
-          {date ? (
-            <div>
-              <dt className="text-muted">Published</dt>
-              <dd className="mt-0.5 text-fg">
-                <time dateTime={post.publishedAt}>{date}</time>
-              </dd>
-            </div>
-          ) : null}
-          {minutes !== null ? (
-            <div>
-              <dt className="text-muted">Reading time</dt>
-              <dd data-numeric className="mt-0.5 text-fg">
-                {minutes} min
-              </dd>
-            </div>
-          ) : null}
-        </dl>
-      </Container>
-
-      {post.coverImageUrl ? (
-        <Container width="reading" className="mt-10">
-          <CoverImage src={post.coverImageUrl} />
-        </Container>
-      ) : null}
-
-      <Container width="reading" className="mt-12">
-        {post.contentHtml ? (
-          <ProseBody html={post.contentHtml} />
-        ) : (
-          <p className="max-w-measure text-muted">
-            The text of this {briefing ? 'issue' : kind} is not stored here.
-            {post.externalUrl ? (
-              <>
-                {' '}
-                <ExternalLink href={post.externalUrl}>Read it on Beehiiv</ExternalLink>.
-              </>
+            {post.excerpt ? (
+              <p className="mt-5 max-w-measure text-subhead text-muted">{post.excerpt}</p>
             ) : null}
-          </p>
-        )}
 
-        {post.externalUrl ? (
-          <p className="mt-12 max-w-measure text-meta text-muted">
-            Originally published on{' '}
-            <ExternalLink href={post.externalUrl}>Beehiiv</ExternalLink>.
-          </p>
-        ) : null}
+            {/* A rule here divides the metadata from the body — it is dividing
+                two real things, which is the only reason this site draws a rule. */}
+            <dl className="mt-6 flex flex-wrap gap-x-12 gap-y-3 border-t border-hairline pt-4 text-meta">
+              {number ? (
+                <div>
+                  <dt className="text-muted">Issue</dt>
+                  <dd data-numeric className="mt-0.5 text-fg">
+                    {number}
+                  </dd>
+                </div>
+              ) : null}
+              {date ? (
+                <div>
+                  <dt className="text-muted">Published</dt>
+                  <dd className="mt-0.5 text-fg">
+                    <time dateTime={post.publishedAt}>{date}</time>
+                  </dd>
+                </div>
+              ) : null}
+              {minutes !== null ? (
+                <div>
+                  <dt className="text-muted">Reading time</dt>
+                  <dd data-numeric className="mt-0.5 text-fg">
+                    {minutes} min
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          </header>
 
-        <PrintPermalink path={postPath(post)} className="mt-12" />
+          {post.coverImageUrl ? <CoverImage src={post.coverImageUrl} /> : null}
+
+          <div className="mt-4">
+            {post.contentHtml ? (
+              <ProseBody html={post.contentHtml} />
+            ) : (
+              <p className="max-w-measure text-muted">
+                The text of this {briefing ? 'issue' : kind} is not stored here.
+                {post.externalUrl ? (
+                  <>
+                    {' '}
+                    <ExternalLink href={post.externalUrl}>Read it on Beehiiv</ExternalLink>.
+                  </>
+                ) : null}
+              </p>
+            )}
+
+            {post.externalUrl ? (
+              <p className="mt-12 max-w-measure text-meta text-muted">
+                Originally published on{' '}
+                <ExternalLink href={post.externalUrl}>Beehiiv</ExternalLink>.
+              </p>
+            ) : null}
+
+            <PrintPermalink path={postPath(post)} className="mt-12" />
+          </div>
+        </div>
       </Container>
 
-      <Container width="reading" className="mt-16">
-        <SubscribePanel heading="Get the next briefing by email" tone="plain" />
+      <Container width="reading" className="mt-5">
+        <SubscribePanel heading="Get the next briefing by email" />
       </Container>
 
       {previous || next ? (
-        <Container width="reading" className="mt-16">
+        <Container width="reading" className="mt-5">
           {/* Hidden in print: both sides are links to pages a sheet of paper
               cannot reach. */}
-          <nav aria-label={`More ${kind}s`} className="border-t border-hairline pt-8 print:hidden">
+          <nav aria-label={`More ${kind}s`} className="story story-compact print:hidden">
             {/* Position encodes direction: earlier on the left, later on the
                 right. No arrow glyphs. */}
             <div className="grid gap-8 sm:grid-cols-2">

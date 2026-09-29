@@ -11,9 +11,11 @@ import type { ReactNode } from 'react';
 const shared =
   'inline-flex min-h-[2.875rem] items-center justify-center border px-5 py-3 font-sans text-[0.9375rem] font-medium transition-colors';
 
+// Primary sits on --surface-2 so it still reads as a control inside a story
+// box, which is itself --surface.
 const variants = {
-  primary: 'border-accent bg-surface text-fg hover:bg-surface-2 hover:border-link',
-  quiet: 'border-hairline bg-transparent text-fg hover:bg-surface hover:border-rule',
+  primary: 'border-accent bg-surface-2 text-fg hover:border-link',
+  quiet: 'border-rule bg-transparent text-fg hover:bg-surface-2 hover:border-accent',
 } as const;
 
 export type ActionVariant = keyof typeof variants;
@@ -68,7 +70,7 @@ export function UnavailableAction({ children }: { children: ReactNode }) {
     <span
       className={clsx(
         shared,
-        'cursor-not-allowed border-dashed border-accent bg-surface text-muted',
+        'cursor-not-allowed border-dashed border-accent bg-transparent text-muted',
       )}
       aria-disabled="true"
     >
