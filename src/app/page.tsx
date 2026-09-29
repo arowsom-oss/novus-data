@@ -1,16 +1,14 @@
-import clsx from 'clsx';
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 import { ActionLink } from '@/components/action';
 import { Container } from '@/components/container';
-import { IssueList } from '@/components/issue-list';
 import { JsonLd } from '@/components/json-ld';
-import { NeedsInput } from '@/components/needs-input';
 import { SeveritySwatch } from '@/components/severity-legend';
-import { StatusBadge } from '@/components/status-badge';
 import { SignInPanel } from '@/components/sign-in-panel';
+import { StatusBadge } from '@/components/status-badge';
+import { SectionLabel, StoryBox } from '@/components/story-box';
 import { SubscribePanel } from '@/components/subscribe-panel';
 import { TextLink } from '@/components/text-link';
 import { coverageTopics } from '@/config/coverage';
@@ -29,6 +27,15 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl('/') },
 };
 
+/**
+ * The front page, laid out the way a paper lays out its own: a nameplate, a
+ * lead story with a rail beside it, then bands of boxed stories.
+ *
+ * The lead is chosen, never written by hand: the most pressing open register
+ * entry if there is one, otherwise the latest briefing, otherwise the case for
+ * the publication itself. Every figure on the page is counted from the
+ * register at build time, and a band with nothing real in it does not render.
+ */
 export default async function HomePage() {
   const [disruptions, issues, matrix, analysis] = await Promise.all([
     listDisruptions(),
@@ -40,549 +47,426 @@ export default async function HomePage() {
   const open = disruptions.filter((entry) => entry.status !== 'resolved');
   const [lead, ...rest] = open;
   const latestIssue = issues[0] ?? null;
+  // The case for the site leads only while there is no real story to lead with.
+  const explainerLeads = !lead && !latestIssue;
+
+  const counts = registerCounts(disruptions, matrix.rows.length);
 
   return (
     <>
       <JsonLd data={publicationJsonLd()} />
 
-      <Opening />
+      <Nameplate />
 
-      <RegisterPulse disruptions={disruptions} entityCount={matrix.rows.length} />
+      <Container className="mt-6">
+        <div className="grid gap-4 lg:grid-cols-12 [&>*]:min-w-0">
+          {lead ? (
+            <LeadDisruption disruption={lead} className="lg:col-span-8" />
+          ) : latestIssue ? (
+            <LeadIssue issue={latestIssue} className="lg:col-span-8" />
+          ) : (
+            <Explainer size="lead" className="lg:col-span-8" />
+          )}
 
-      <Mission />
-
-      <WhatWeDo />
-
-      <TheApp />
-
-      <WhoItIsFor />
-
-      {lead ? (
-        <LeadDisruption disruption={lead} />
-      ) : latestIssue ? (
-        <LeadIssue issue={latestIssue} />
-      ) : null}
-
-      {rest.length > 0 ? (
-        <Container className="mt-12 sm:mt-16">
-          <SectionHeading id="open">Also open</SectionHeading>
-          <ul className="mt-6 border-b border-hairline">
-            {rest.slice(0, 5).map((disruption) => (
-              <li key={disruption.id} className="border-t border-hairline">
-                <Link
-                  href={`/disruptions/${disruption.id}`}
-                  className="group grid gap-x-8 gap-y-2 px-2 py-5 transition-colors hover:bg-surface sm:grid-cols-[9rem_1fr] sm:px-3"
-                >
-                  <StatusBadge status={disruption.status} />
-                  <div>
-                    <h3 className="text-[1.1875rem] font-semibold text-fg transition-colors group-hover:text-link">
-                      {disruption.title}
-                    </h3>
-                    <p className="mt-1.5 max-w-[62ch] text-[0.9375rem] text-muted">
-                      {disruption.summary}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3">
-            <TextLink standalone href="/disruptions">
-              The full register
-            </TextLink>
-          </p>
-        </Container>
-      ) : null}
-
-      {matrix.rows.length > 0 ? (
-        <Container className="mt-12 sm:mt-16">
-          <SectionHeading id="exposure">Most exposed</SectionHeading>
-          <p className="mt-3 max-w-measure text-muted">
-            Companies and sectors that the open register currently reaches. Every assessment
-            behind this states its mechanism and its source.
-          </p>
-          <ul className="mt-6 border-b border-hairline">
-            {matrix.rows.slice(0, 6).map((row) => (
-              <ExposureRow key={row.entity.id} row={row} />
-            ))}
-          </ul>
-          <p className="mt-3">
-            <TextLink standalone href="/exposure">
-              The full exposure chart
-            </TextLink>
-          </p>
-        </Container>
-      ) : null}
-
-      {latestIssue && lead ? (
-        <Container className="mt-12 sm:mt-16">
-          <SectionHeading id="briefing">From {publication.newsletter.name}</SectionHeading>
-          <p className="mt-3 max-w-measure text-muted">{publication.newsletter.description}</p>
-          <div className="mt-6 border-t border-hairline pt-6">
-            <p className="flex flex-wrap gap-x-8 gap-y-1 text-meta text-muted">
-              {formatIssueLabel(latestIssue.issueNumber) ? (
-                <span data-numeric>Issue {formatIssueLabel(latestIssue.issueNumber)}</span>
-              ) : null}
-              {formatLongDate(latestIssue.publishedAt) ? (
-                <time dateTime={latestIssue.publishedAt}>
-                  {formatLongDate(latestIssue.publishedAt)}
-                </time>
-              ) : null}
-            </p>
-            <h3 className="mt-3 max-w-[24ch] text-heading font-semibold text-fg">
-              <Link
-                href={`/briefings/${latestIssue.slug}`}
-                className="transition-colors hover:text-link"
-              >
-                {latestIssue.title}
-              </Link>
-            </h3>
-            {latestIssue.excerpt ? (
-              <p className="mt-3 max-w-[62ch] text-muted">{latestIssue.excerpt}</p>
-            ) : null}
+          <div className="flex flex-col gap-4 lg:col-span-4">
+            <StoryBox as="aside" size="compact" level={2} kicker="Our mission" kickerTone="muted">
+              <p className="text-[1.1875rem] font-semibold leading-snug tracking-[-0.01em] text-fg">
+                {publication.mission}
+              </p>
+            </StoryBox>
+            <SignInPanel enabled={accountsConfigured()} />
           </div>
-          <p className="mt-3">
-            <TextLink standalone href="/briefings">
-              Every issue
-            </TextLink>
-          </p>
-        </Container>
-      ) : null}
-
-      {/* Only once something is published: an empty "latest analysis" block
-          is a promise, and this page makes none. */}
-      {analysis.length > 0 ? (
-        <Container className="mt-12 sm:mt-16">
-          <SectionHeading id="analysis">Latest analysis</SectionHeading>
-          <div className="mt-6">
-            <IssueList issues={analysis} label="Latest articles and reviews" basePath="/articles" />
-          </div>
-          <p className="mt-3">
-            <TextLink standalone href="/articles">
-              All articles and long-term reviews
-            </TextLink>
-          </p>
-        </Container>
-      ) : null}
-
-      <Container className="mt-12 sm:mt-16">
-        <SectionHeading id="coverage">What Novus Data watches</SectionHeading>
-        <dl className="mt-6 grid gap-x-14 md:grid-cols-2">
-          {coverageTopics.map((topic) => (
-            <div key={topic.id} className="border-t border-hairline py-5">
-              <dt className="text-[1.1875rem] font-semibold text-fg">{topic.title}</dt>
-              <dd className="mt-1.5 max-w-[52ch] text-[0.9375rem] text-muted">{topic.summary}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-3">
-          <TextLink standalone href="/coverage">
-            Why each of these matters
-          </TextLink>
-        </p>
-      </Container>
-
-      <Container className="mt-12 sm:mt-16">
-        {/* min-w-0 on the children: a grid item defaults to min-width:auto and
-            will not shrink below its longest unbreakable word otherwise. */}
-        <div className="grid gap-8 md:grid-cols-2 [&>*]:min-w-0">
-          <SubscribePanel heading={`Subscribe to ${publication.newsletter.name}`} />
-          <section className="border border-hairline bg-surface p-7 sm:p-10">
-            <h2 className="text-heading font-semibold text-fg">
-              {publication.alerts.name}
-            </h2>
-            <p className="mt-3 max-w-[52ch] text-muted">
-              Notifications when the register changes. Not built yet.
-            </p>
-            <p className="mt-3">
-              <TextLink standalone href="/alerts">
-                What it will and will not do
-              </TextLink>
-            </p>
-          </section>
         </div>
       </Container>
 
-      <Container className="mt-16">
-        <p className="max-w-[56ch] text-muted">
-          {formatAuthorNames() ? (
-            <>Novus Data is written by {formatAuthorNames()}. </>
-          ) : (
+      {rest.length > 0 || matrix.rows.length > 0 ? (
+        <Band id="register-now" label="In the register now">
+          {rest.length > 0 ? (
+            <AlsoOpen
+              disruptions={rest.slice(0, 5)}
+              className={matrix.rows.length > 0 ? 'lg:col-span-7' : 'lg:col-span-12'}
+            />
+          ) : null}
+          {matrix.rows.length > 0 ? (
+            <MostExposed
+              rows={matrix.rows.slice(0, 6)}
+              className={rest.length > 0 ? 'lg:col-span-5' : 'lg:col-span-12'}
+            />
+          ) : null}
+        </Band>
+      ) : null}
+
+      {/* The latest briefing gets its own box only when something else is
+          leading; when it is the lead, repeating it here would say it twice. */}
+      {(latestIssue && lead) || analysis.length > 0 ? (
+        <Band id="writing" label="Writing">
+          {latestIssue && lead ? (
+            <LatestBriefing
+              issue={latestIssue}
+              className={analysis.length > 0 ? 'lg:col-span-6' : 'lg:col-span-12'}
+            />
+          ) : null}
+          {analysis.length > 0 ? (
+            <LatestAnalysis
+              posts={analysis}
+              className={latestIssue && lead ? 'lg:col-span-6' : 'lg:col-span-12'}
+            />
+          ) : null}
+        </Band>
+      ) : null}
+
+      <Band id="inside" label="Inside Novus Data">
+        {explainerLeads ? null : <Explainer size="standard" className="lg:col-span-12" />}
+
+        <StoryBox
+          className="lg:col-span-7"
+          kicker="The register"
+          title="What is going wrong in physical trade, dated and sourced"
+          titleHref="/disruptions"
+          footer={
             <>
-              Novus Data is written by <NeedsInput label="author name" />.{' '}
+              <TextLink href="/disruptions">Open the register</TextLink>
+              {counts ? <span>{counts.register}</span> : null}
             </>
-          )}
-          <TextLink href="/about">How it is produced</TextLink>.
-        </p>
-      </Container>
+          }
+        >
+          <p>
+            One entry per problem: chokepoints, ports, trade policy, industrial inputs, energy and
+            labour. Each carries its sources, a status and the date it was last reviewed, so an
+            old assessment never passes for a current one.
+          </p>
+        </StoryBox>
+
+        <StoryBox
+          className="lg:col-span-5"
+          kicker="The exposure chart"
+          title="Which companies each problem reaches, and how"
+          titleHref="/exposure"
+          footer={
+            <>
+              <TextLink href="/exposure">Open the chart</TextLink>
+              {counts ? <span>{counts.names}</span> : null}
+            </>
+          }
+        >
+          <p>
+            Each tracked problem is mapped to the companies and sectors it reaches, with the
+            mechanism written out. An assessment needs a mechanism, a confidence level, a date and
+            a source to appear. The site drops any that lacks one when the page is built.
+          </p>
+        </StoryBox>
+
+        <StoryBox
+          className="lg:col-span-5"
+          kicker="The monitor"
+          title="What is changing now, from public feeds"
+          titleHref="/monitor"
+          footer={<TextLink href="/monitor">Open the monitor</TextLink>}
+        >
+          <p>
+            Where news reporting of strikes, blockades, sanctions and fighting is running above
+            its own normal, set beside natural hazards, port wind and energy prices, and re-read
+            every fifteen minutes. Every reading shows the time its source produced it, and a feed
+            that fails says so.
+          </p>
+        </StoryBox>
+
+        <StoryBox
+          className="lg:col-span-7"
+          kicker={publication.newsletter.name}
+          title="The week in writing, by email"
+          titleHref="/briefings"
+          footer={
+            <>
+              <TextLink href="/briefings">Read the archive</TextLink>
+              <TextLink href="/subscribe">Subscribe</TextLink>
+            </>
+          }
+        >
+          <p>
+            The briefing pulls the register and the monitor together: what moved, what it is likely
+            to reach next, and what is worth ignoring. The site is the record; the briefing is the
+            summary.
+          </p>
+        </StoryBox>
+      </Band>
+
+      <Band id="who-for" label="Who it is written for">
+        <StoryBox
+          className="lg:col-span-6"
+          kicker="For investors"
+          title="Physical trade breaks before prices move"
+        >
+          <p>
+            A chokepoint closing absorbs vessel capacity across a whole market, not one route. A
+            licence on one processed metal can reprice a sector that looked diversified. The gap
+            between the event and the repricing is the only part anyone can act in.
+          </p>
+          <p>
+            The exposure chart names what sits downstream of a problem and how strong the evidence
+            is: reported, inferred or estimated. You can weigh each claim yourself instead of
+            taking it on trust.
+          </p>
+        </StoryBox>
+
+        <StoryBox
+          className="lg:col-span-6"
+          kicker="For operators"
+          title="The decision comes before the confirmation"
+        >
+          <p>
+            A rerouting adds weeks to transit time. That changes safety stock, working capital and
+            every promise made downstream, and the call usually has to be made before the
+            disruption is confirmed.
+          </p>
+          <p>
+            The register gives the problem with its date and sources attached, so you can judge it
+            rather than act on a headline. Where your suppliers or your category appear on the
+            chart, the mechanism is written out, which is what makes it usable in front of a board
+            or a customer.
+          </p>
+        </StoryBox>
+
+        <p className="text-meta text-muted lg:col-span-12">{publication.disclaimer}</p>
+      </Band>
+
+      <Band id="more" label="Coverage and what comes next">
+        <StoryBox
+          className="lg:col-span-7"
+          kicker="Coverage"
+          title="What Novus Data watches"
+          titleHref="/coverage"
+          footer={<TextLink href="/coverage">Why each of these matters</TextLink>}
+        >
+          <ul className="grid max-w-none gap-x-8 sm:grid-cols-2">
+            {coverageTopics.map((topic) => (
+              <li key={topic.id} className="border-t border-hairline py-3">
+                <span className="block font-medium text-fg">{topic.title}</span>
+                <span className="mt-1 block text-[0.875rem]">{topic.summary}</span>
+              </li>
+            ))}
+          </ul>
+        </StoryBox>
+
+        <div className="flex flex-col gap-4 lg:col-span-5">
+          <StoryBox
+            kicker="In development"
+            title={publication.alerts.name}
+            titleHref="/alerts"
+            footer={
+              <>
+                <TextLink href="/alerts">What it will and will not do</TextLink>
+              </>
+            }
+          >
+            <p>
+              The register on your phone, and a notification when it changes: a new disruption
+              opens, one you follow escalates, or a company you hold is added to a problem you are
+              already watching. There is no release date yet, and subscribers to{' '}
+              {publication.newsletter.name} hear first.
+            </p>
+          </StoryBox>
+
+          <SubscribePanel level={3} heading={`Subscribe to ${publication.newsletter.name}`} />
+        </div>
+      </Band>
+
+      {formatAuthorNames() ? (
+        <Container className="mt-10">
+          <p className="border-t border-hairline pt-5 text-meta text-muted">
+            Novus Data is written by {formatAuthorNames()}.{' '}
+            <TextLink href="/about">How it is produced</TextLink>.
+          </p>
+        </Container>
+      ) : null}
     </>
   );
 }
 
 /**
- * The lead story is the most pressing open disruption, exactly as a news front
- * page leads with its biggest story. It refreshes itself from the register with
- * no hand-edit.
+ * The front page's name, set as a paper sets its nameplate: large, closed by
+ * a double rule, with the strapline beneath. It is the page's h1.
  */
-function LeadDisruption({ disruption }: { disruption: DisruptionSummary }) {
-  const updated = formatLongDate(disruption.updatedAt);
+function Nameplate() {
+  const authors = formatAuthorNames();
 
   return (
-    <Container className="mt-12 sm:mt-16">
-      <SectionHeading id="latest">Leading the register</SectionHeading>
-      <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-2 text-meta text-muted">
-        <StatusBadge status={disruption.status} />
-        <span>{CATEGORY_LABELS[disruption.category]}</span>
-        {updated ? (
-          <span>
-            Reviewed <time dateTime={disruption.updatedAt}>{updated}</time>
-          </span>
-        ) : null}
+    <Container className="pt-8 sm:pt-12">
+      <div className="border-b-[6px] border-double border-accent pb-3 sm:pb-4">
+        <h1 className="text-[clamp(2.5rem,1.75rem+3.4vw,3.75rem)] font-bold leading-[0.95] tracking-[-0.04em] text-fg">
+          {publication.name}
+        </h1>
       </div>
-
-      <h3 className="mt-4 max-w-[20ch] text-title font-semibold text-fg">
-        {disruption.title}
-      </h3>
-
-      <p className="mt-5 max-w-[58ch] text-subhead text-muted">{disruption.summary}</p>
-
-      <div className="mt-7 flex flex-wrap gap-4">
-        <ActionLink href={`/disruptions/${disruption.id}`}>Read the analysis</ActionLink>
-        {disruption.exposures.length > 0 ? (
-          <ActionLink href="/exposure" variant="quiet">
-            See who it reaches
-          </ActionLink>
-        ) : null}
+      <div className="flex flex-col gap-1 border-b border-hairline py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+        <p className="text-[0.9375rem] text-muted">{publication.shortDescription}</p>
+        <p className="text-meta text-muted">
+          Free to read{authors ? <> &middot; Written by {authors}</> : null}
+        </p>
       </div>
     </Container>
   );
 }
 
-/** Register empty but the briefing has shipped — lead with the latest issue. */
-function LeadIssue({ issue }: { issue: IssueSummary }) {
-  const date = formatLongDate(issue.publishedAt);
-
+/** A band of boxes opened by a section label. */
+function Band({
+  id,
+  label,
+  children,
+}: {
+  id: string;
+  label: string;
+  children: ReactNode;
+}) {
   return (
-    <Container className="mt-12 sm:mt-16">
-      <SectionHeading id="latest">Latest briefing</SectionHeading>
-      <p className="mt-6 text-meta text-muted">
-        {date ? <time dateTime={issue.publishedAt}>{date}</time> : null}
-      </p>
-
-      <h3 className="mt-3 max-w-[20ch] text-title font-semibold text-fg">
-        {issue.title}
-      </h3>
-
-      {issue.excerpt ? (
-        <p className="mt-5 max-w-[58ch] text-subhead text-muted">{issue.excerpt}</p>
-      ) : null}
-
-      <div className="mt-7">
-        <ActionLink href={`/briefings/${issue.slug}`}>Read this briefing</ActionLink>
-      </div>
+    <Container className="mt-10 sm:mt-12">
+      <section aria-labelledby={id}>
+        <SectionLabel id={id}>{label}</SectionLabel>
+        <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-12 [&>*]:min-w-0">
+          {children}
+        </div>
+      </section>
     </Container>
   );
 }
 
-/**
- * The page opener: what Novus Data is, and the account panel.
- *
- * The sign-in is a shell with nothing behind it — see SignInPanel. It leads
- * because that is where the product is going, not because it works today.
- */
-function Opening() {
+/** The case for the publication: the lead when nothing else is, a box when something is. */
+function Explainer({ size, className }: { size: 'lead' | 'standard'; className?: string }) {
   return (
-    <Container className="relative isolate pt-10 sm:pt-14">
-      {/* Decorative gridlines. See .grid-field in globals.css — no image, no
-          motion, and it disappears under forced colours and prefers-contrast. */}
-      <div className="grid-field" aria-hidden="true" />
-
-      <div className="relative grid gap-12 lg:grid-cols-[1.35fr_1fr] lg:gap-16 [&>*]:min-w-0">
-        <div>
-          {/* A masthead line rather than a bare repeat of the header wordmark:
-              the name earns its place here by carrying the descriptor. */}
-          <p className="flex flex-col gap-1 border-b-2 border-accent pb-4 sm:flex-row sm:items-baseline sm:gap-4">
-            <span className="text-[1.375rem] font-semibold tracking-[-0.012em] text-fg">
-              {publication.name}
-            </span>
-            <span className="text-meta text-muted">{publication.shortDescription}</span>
-          </p>
-
-          <h1 className="mt-8 max-w-[15ch] text-display font-semibold text-fg">
-            {publication.openingLine}
-          </h1>
-
-          <p className="mt-7 max-w-[58ch] text-subhead text-muted">{publication.openingBody}</p>
-
-          <div className="mt-9 flex flex-wrap gap-4">
-            <ActionLink href="/disruptions">See what is going wrong</ActionLink>
+    <StoryBox
+      size={size}
+      level={2}
+      className={className}
+      kicker="Why Novus Data exists"
+      title={publication.openingLine}
+      deck={publication.openingBody}
+      footer={
+        size === 'lead' ? (
+          <div className="flex flex-wrap gap-3 py-1">
+            <ActionLink href="/disruptions">Open the register</ActionLink>
             <ActionLink href="/exposure" variant="quiet">
               See who it reaches
             </ActionLink>
           </div>
-        </div>
-
-        <div className="lg:pt-14">
-          <SignInPanel enabled={accountsConfigured()} />
-        </div>
-      </div>
-    </Container>
+        ) : undefined
+      }
+    />
   );
 }
 
 /**
- * A count of what is actually in the register, directly under the hero.
- *
- * Every figure here is derived from real records at build time — the number of
- * files in content/disruptions/, how many of them are active, how many distinct
- * entities the exposure chart resolves, and the most recent review date across
- * all of them. Nothing is rounded, projected or dressed up, and there are no
- * counters that animate on scroll.
- *
- * **It renders nothing at all when the register is empty.** A row of zeroes
- * would be an accurate but useless first impression, and per Rule 1 an empty
- * page beats an invented one.
+ * The most pressing open disruption leads, exactly as a front page leads with
+ * its biggest story. It refreshes itself from the register with no hand-edit.
  */
-function RegisterPulse({
+function LeadDisruption({
+  disruption,
+  className,
+}: {
+  disruption: DisruptionSummary;
+  className?: string;
+}) {
+  const updated = formatLongDate(disruption.updatedAt);
+
+  return (
+    <StoryBox
+      size="lead"
+      level={2}
+      className={className}
+      kicker={`Leading the register · ${CATEGORY_LABELS[disruption.category]}`}
+      title={disruption.title}
+      titleHref={`/disruptions/${disruption.id}`}
+      deck={disruption.summary}
+      footer={
+        <>
+          <StatusBadge status={disruption.status} />
+          {updated ? (
+            <span>
+              Reviewed <time dateTime={disruption.updatedAt}>{updated}</time>
+            </span>
+          ) : null}
+          <span className="flex basis-full flex-wrap gap-3 pt-1">
+            <ActionLink href={`/disruptions/${disruption.id}`}>Read the analysis</ActionLink>
+            {disruption.exposures.length > 0 ? (
+              <ActionLink href="/exposure" variant="quiet">
+                See who it reaches
+              </ActionLink>
+            ) : null}
+          </span>
+        </>
+      }
+    />
+  );
+}
+
+/** Register empty but the briefing has shipped: lead with the latest issue. */
+function LeadIssue({ issue, className }: { issue: IssueSummary; className?: string }) {
+  const date = formatLongDate(issue.publishedAt);
+
+  return (
+    <StoryBox
+      size="lead"
+      level={2}
+      className={className}
+      kicker={`Latest briefing${formatIssueLabel(issue.issueNumber) ? ` · Issue ${formatIssueLabel(issue.issueNumber)}` : ''}`}
+      title={issue.title}
+      titleHref={`/briefings/${issue.slug}`}
+      deck={issue.excerpt ?? undefined}
+      footer={
+        <>
+          {date ? <time dateTime={issue.publishedAt}>{date}</time> : null}
+          <span className="flex basis-full pt-1">
+            <ActionLink href={`/briefings/${issue.slug}`}>Read this briefing</ActionLink>
+          </span>
+        </>
+      }
+    />
+  );
+}
+
+function AlsoOpen({
   disruptions,
-  entityCount,
+  className,
 }: {
   disruptions: DisruptionSummary[];
-  entityCount: number;
+  className?: string;
 }) {
-  if (disruptions.length === 0) return null;
-
-  const active = disruptions.filter((entry) => entry.status === 'active').length;
-  const lastReviewed = disruptions
-    .map((entry) => entry.updatedAt)
-    .filter(Boolean)
-    .sort()
-    .at(-1);
-
-  const stats: { label: string; value: string; href?: string; date?: boolean }[] = [
-    {
-      label: disruptions.length === 1 ? 'Disruption tracked' : 'Disruptions tracked',
-      value: String(disruptions.length),
-      href: '/disruptions',
-    },
-    { label: 'Active now', value: String(active) },
-    {
-      label: entityCount === 1 ? 'Name on the chart' : 'Names on the chart',
-      value: String(entityCount),
-      href: '/exposure',
-    },
-  ];
-
-  // The date is set smaller than the counts on purpose: at the same size it is
-  // four times the width of a single digit and unbalances the row.
-  const reviewed = lastReviewed ? formatShortDate(lastReviewed) : null;
-  if (reviewed) stats.push({ label: 'Last reviewed', value: reviewed, date: true });
-
   return (
-    <Container className="mt-12 sm:mt-16">
-      <dl className="grid grid-cols-2 gap-px border-y border-hairline bg-hairline sm:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="relative min-w-0 bg-ink px-1 py-5 sm:px-2">
-            <dt className="text-meta text-muted">
-              {stat.href ? (
-                // A stretched link: the anchor stays inside the <dt> so the
-                // <dl> content model holds, but `after:inset-0` makes the whole
-                // cell the target rather than a 16px line of label text.
-                <TextLink href={stat.href} className="text-meta after:absolute after:inset-0 after:content-['']">
-                  {stat.label}
-                </TextLink>
-              ) : (
-                stat.label
-              )}
-            </dt>
-            <dd
-              className={clsx(
-                'mt-2 font-semibold leading-none text-fg',
-                stat.date ? 'text-[1.125rem] leading-snug' : 'text-[1.75rem]',
-              )}
-              data-numeric
-            >
-              {stat.value}
-            </dd>
-          </div>
+    <StoryBox
+      className={className}
+      kicker="Also open"
+      title="Other entries in the register"
+      footer={<TextLink href="/disruptions">The full register</TextLink>}
+    >
+      <ul className="story-list max-w-none">
+        {disruptions.map((disruption) => (
+          <li key={disruption.id} className="py-3 first:pt-0">
+            <Link href={`/disruptions/${disruption.id}`} className="group block">
+              <StatusBadge status={disruption.status} />
+              <span className="mt-1 block text-[1.0625rem] font-semibold text-fg transition-colors group-hover:text-link">
+                {disruption.title}
+              </span>
+              <span className="mt-1 block text-[0.9375rem]">{disruption.summary}</span>
+            </Link>
+          </li>
         ))}
-      </dl>
-    </Container>
+      </ul>
+    </StoryBox>
   );
 }
 
-function Mission() {
+function MostExposed({ rows, className }: { rows: EntityExposure[]; className?: string }) {
   return (
-    <Container className="mt-12 sm:mt-16">
-      <div className="max-w-reading section-rule">
-        <p className="kicker kicker-muted">Our mission</p>
-        <p className="mt-4 text-title font-semibold text-fg">{publication.mission}</p>
-      </div>
-    </Container>
-  );
-}
-
-/**
- * What the site actually is. Deliberately a typographic list rather than a row
- * of icon cards — every item here is a thing that exists and can be opened.
- */
-function WhatWeDo() {
-  const pillars = [
-    {
-      href: '/disruptions',
-      title: 'The register',
-      body: 'A live record of what is going wrong in physical trade — chokepoints, ports, trade policy, industrial inputs, energy and labour. Each entry carries the date it was last reviewed, so you are never reading a month-old assessment as though it were today.',
-      cta: 'Open the register',
-    },
-    {
-      href: '/exposure',
-      title: 'The exposure chart',
-      body: 'The part nobody else does. Every tracked problem is mapped to the companies and sectors it reaches, with the mechanism written out — not "affected", but how. A claim without a mechanism, a confidence level, a date and a source cannot appear on the chart at all. That is enforced in code.',
-      cta: 'Open the chart',
-    },
-    {
-      // A link, not a live panel. Reading the feeds here would put the home
-      // page on the fifteen-minute regeneration cycle too, doubling the calls
-      // to every publisher for a preview of a page one click away.
-      href: '/monitor',
-      title: 'The monitor',
-      body: 'Public feeds, re-read every fifteen minutes: where reporting of strikes, blockades, sanctions and fighting is running above its normal, flags at ports and straits, ships at ten chokepoints, hazards, port wind and energy prices. Every reading shows when its source produced it.',
-      cta: 'Open the monitor',
-    },
-    {
-      href: '/briefings',
-      title: 'The briefing',
-      body: `${publication.newsletter.name} pulls the week together in writing and sends it by email — what moved, what it is likely to reach next, and what is worth ignoring.`,
-      cta: 'Read the archive',
-    },
-  ];
-
-  return (
-    <Container className="mt-12 sm:mt-16">
-      <SectionHeading id="what-we-do">What we do at Novus Data</SectionHeading>
-      <p className="mt-4 max-w-measure text-muted">
-        Four things, and they feed each other. The register records the problem, the chart says
-        who it lands on, the monitor shows what is moving now, and the briefing explains what it
-        means.
-      </p>
-
-      {/* One link per pillar, wrapping the whole card: a larger target than a
-          trailing text link, and the rule at the top carries the hover so the
-          columns read as a row rather than loose paragraphs. Two by two until
-          there is room for four across, because four at tablet width leaves
-          each column about twenty characters wide. */}
-      <div className="mt-8 grid gap-x-10 md:grid-cols-2 lg:grid-cols-4">
-        {pillars.map((pillar) => (
-          <Link
-            key={pillar.href}
-            href={pillar.href}
-            className="group flex flex-col border-t-2 border-hairline py-6 transition-colors hover:border-accent focus-visible:border-accent"
-          >
-            <h3 className="text-[1.1875rem] font-semibold text-fg transition-colors group-hover:text-link">
-              {pillar.title}
-            </h3>
-            <p className="mt-2.5 text-[0.9375rem] text-muted">{pillar.body}</p>
-            {/* mt-auto pins the three calls to action to a common baseline even
-                though the paragraphs above them are different lengths. */}
-            <p className="mt-auto pt-4 text-[0.9375rem] text-link underline decoration-link/35 underline-offset-4 transition-colors group-hover:decoration-link">
-              {pillar.cta}
-            </p>
-          </Link>
+    <StoryBox
+      className={className}
+      kicker="Most exposed"
+      title="Names the open register reaches"
+      footer={<TextLink href="/exposure">The full exposure chart</TextLink>}
+    >
+      <ul className="story-list max-w-none">
+        {rows.map((row) => (
+          <ExposureRow key={row.entity.id} row={row} />
         ))}
-      </div>
-    </Container>
-  );
-}
-
-/**
- * The app is not built. The copy is written in the future tense throughout and
- * points at the briefing, which is the channel that exists today.
- */
-function TheApp() {
-  return (
-    <Container className="mt-12 sm:mt-16">
-      <div className="border border-hairline bg-surface p-7 sm:p-10">
-        <div className="grid gap-8 md:grid-cols-[1.4fr_1fr] md:gap-14 [&>*]:min-w-0">
-          <div>
-            <p className="kicker">In development</p>
-            <h2 className="mt-3 text-heading font-semibold text-fg">
-              {publication.alerts.name}
-            </h2>
-            <p className="mt-4 max-w-measure text-muted">
-              The register on your phone, and a notification when it changes — a new disruption
-              opens, one you follow escalates, or a company you hold is added to a problem you
-              are already watching. You find out when it happens rather than when you next think
-              to look.
-            </p>
-            <p className="mt-4 max-w-measure text-muted">
-              It is being built now and there is no release date worth announcing yet. Subscribers
-              to {publication.newsletter.name} hear first.
-            </p>
-          </div>
-
-          <div className="flex flex-col justify-center gap-4">
-            <ActionLink href="/alerts">What the app will do</ActionLink>
-            <ActionLink href="/subscribe" variant="quiet">
-              Get told when it lands
-            </ActionLink>
-          </div>
-        </div>
-      </div>
-    </Container>
-  );
-}
-
-/** Two audiences, two different reasons. Stated separately because they differ. */
-function WhoItIsFor() {
-  return (
-    <Container className="mt-12 sm:mt-16">
-      <SectionHeading id="who-for">Why it is worth your time</SectionHeading>
-
-      <div className="mt-8 grid gap-x-16 gap-y-10 md:grid-cols-2 [&>*]:min-w-0">
-        <div className="border-t border-hairline pt-6">
-          <h3 className="text-[1.1875rem] font-semibold text-fg">
-            If you invest
-          </h3>
-          <div className="mt-3 flex flex-col gap-3 text-muted">
-            <p>
-              Physical trade breaks before prices move. A chokepoint closing absorbs vessel
-              capacity across a whole market, not one route; a licence on one processed metal can
-              reprice a sector that looked diversified. The gap between the event and the
-              repricing is the only part you can act in.
-            </p>
-            <p>
-              The exposure chart is built to close that gap honestly. It tells you which names sit
-              downstream of a problem and, crucially, how strong the evidence is — reported,
-              inferred or estimated — so you can size your conviction to ours.
-            </p>
-          </div>
-        </div>
-
-        <div className="border-t border-hairline pt-6">
-          <h3 className="text-[1.1875rem] font-semibold text-fg">
-            If you run a business
-          </h3>
-          <div className="mt-3 flex flex-col gap-3 text-muted">
-            <p>
-              A rerouting adds weeks to transit time, which changes safety stock, working capital
-              and every promise you have made downstream — and the decision usually has to be
-              taken before the disruption is confirmed.
-            </p>
-            <p>
-              The register gives you the problem with its date and its sources attached, so you
-              can judge it yourself rather than act on a headline. Where your suppliers or your
-              own category appear on the chart, the mechanism is written out, which is what makes
-              it usable in a conversation with a board or a customer.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <p className="mt-8 max-w-measure text-meta text-muted">
-        Novus Data publishes analysis and commentary. It is not investment advice, and nothing
-        here is a recommendation to buy or sell any security.
-      </p>
-    </Container>
+      </ul>
+    </StoryBox>
   );
 }
 
@@ -593,38 +477,117 @@ function ExposureRow({ row }: { row: EntityExposure }) {
     .at(-1);
 
   return (
-    <li className="border-t border-hairline">
-      <Link
-        href={`/entities/${row.entity.id}`}
-        className="group grid gap-x-6 gap-y-1 px-2 py-4 transition-colors hover:bg-surface sm:grid-cols-[1fr_auto] sm:px-3"
-      >
-        <div>
-          <span className="block text-[1.0625rem] text-fg transition-colors group-hover:text-link">
-            {row.entity.name}
-          </span>
-          <span className="mt-0.5 block text-meta text-muted">
-            {row.entity.ticker ? `${row.entity.ticker} · ` : ''}
-            {row.entity.sector}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 sm:justify-end">
+    <li className="py-3 first:pt-0">
+      <Link href={`/entities/${row.entity.id}`} className="group block">
+        <span className="block text-[1.0625rem] text-fg transition-colors group-hover:text-link">
+          {row.entity.name}
+        </span>
+        <span className="mt-0.5 block text-meta">
+          {row.entity.ticker ? `${row.entity.ticker} · ` : ''}
+          {row.entity.sector}
+        </span>
+        <span className="mt-1.5 flex items-center gap-2.5 text-meta">
           <SeveritySwatch severity={row.worstSeverity} />
-          <span className="text-meta text-muted">
-            {SEVERITY_LABELS[row.worstSeverity]} ·{' '}
-            <span data-numeric>{row.count}</span>{' '}
+          <span>
+            {SEVERITY_LABELS[row.worstSeverity]} · <span data-numeric>{row.count}</span>{' '}
             {row.count === 1 ? 'disruption' : 'disruptions'}
             {asOf && formatShortDate(asOf) ? `, as of ${formatShortDate(asOf)}` : ''}
           </span>
-        </div>
+        </span>
       </Link>
     </li>
   );
 }
 
-function SectionHeading({ children, id }: { children: ReactNode; id: string }) {
+function LatestBriefing({ issue, className }: { issue: IssueSummary; className?: string }) {
+  const date = formatLongDate(issue.publishedAt);
+  const number = formatIssueLabel(issue.issueNumber);
+
   return (
-    <h2 id={id} className="text-heading font-semibold text-fg">
-      {children}
-    </h2>
+    <StoryBox
+      className={className}
+      kicker={`From ${publication.newsletter.name}`}
+      title={issue.title}
+      titleHref={`/briefings/${issue.slug}`}
+      footer={
+        <>
+          {number ? <span data-numeric>Issue {number}</span> : null}
+          {date ? <time dateTime={issue.publishedAt}>{date}</time> : null}
+          <TextLink href="/briefings">Every issue</TextLink>
+        </>
+      }
+    >
+      {issue.excerpt ? <p>{issue.excerpt}</p> : null}
+    </StoryBox>
   );
+}
+
+function LatestAnalysis({ posts, className }: { posts: IssueSummary[]; className?: string }) {
+  return (
+    <StoryBox
+      className={className}
+      kicker="Latest analysis"
+      title="Articles and long-term reviews"
+      titleHref="/articles"
+      footer={<TextLink href="/articles">All articles and reviews</TextLink>}
+    >
+      <ul className="story-list max-w-none">
+        {posts.map((post) => (
+          <li key={post.slug} className="py-3 first:pt-0">
+            <Link href={`/articles/${post.slug}`} className="group block">
+              {formatShortDate(post.publishedAt) ? (
+                <time dateTime={post.publishedAt} className="block text-meta">
+                  {formatShortDate(post.publishedAt)}
+                </time>
+              ) : null}
+              <span className="mt-1 block text-[1.0625rem] font-semibold text-fg transition-colors group-hover:text-link">
+                {post.title}
+              </span>
+              {post.excerpt ? (
+                <span className="mt-1 block text-[0.9375rem]">{post.excerpt}</span>
+              ) : null}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </StoryBox>
+  );
+}
+
+/**
+ * The register's own counts, as short lines for the box footers. Every figure
+ * is counted from real records at build time. Null when the register is empty:
+ * a row of zeroes would be accurate and useless.
+ */
+function registerCounts(disruptions: DisruptionSummary[], entityCount: number) {
+  if (disruptions.length === 0) return null;
+
+  const active = disruptions.filter((entry) => entry.status === 'active').length;
+  const lastReviewed = disruptions
+    .map((entry) => entry.updatedAt)
+    .filter(Boolean)
+    .sort()
+    .at(-1);
+  const reviewed = lastReviewed ? formatShortDate(lastReviewed) : null;
+
+  return {
+    register: (
+      <>
+        <span data-numeric>{disruptions.length}</span> tracked ·{' '}
+        <span data-numeric>{active}</span> active
+        {reviewed ? (
+          <>
+            {' '}
+            · last reviewed <time dateTime={lastReviewed}>{reviewed}</time>
+          </>
+        ) : null}
+      </>
+    ),
+    names: (
+      <>
+        <span data-numeric>{entityCount}</span>{' '}
+        {entityCount === 1 ? 'name on the chart' : 'names on the chart'}
+      </>
+    ),
+  };
 }
