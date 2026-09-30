@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { Container } from '@/components/container';
 import { PageHeader } from '@/components/page-header';
+import { StoryBox } from '@/components/story-box';
 import { SubscribePanel } from '@/components/subscribe-panel';
 import { ExternalLink, TextLink } from '@/components/text-link';
 import { publication } from '@/config/publication';
@@ -22,10 +23,10 @@ export default function SubscribePage() {
         lede={`${publication.description} Each issue arrives by email.`}
       />
 
-      <Container width="reading" className="mt-6">
+      <Container width="reading" className="mt-8 flex flex-col gap-5">
         <SubscribePanel heading="Subscribe by email" />
 
-        <div className="mt-12 flex flex-col gap-4 text-muted">
+        <StoryBox as="section" level={2} id="how" kicker="How it works" kickerTone="muted" title="What happens to your address">
           <p>
             Subscriptions are handled by Beehiiv, which sends the emails and holds the list.
             Your address goes to Beehiiv and nowhere else, and every issue carries an unsubscribe
@@ -47,7 +48,7 @@ export default function SubscribePage() {
               <TextLink href="/briefings">Briefings</TextLink>.
             </p>
           )}
-        </div>
+        </StoryBox>
       </Container>
     </>
   );

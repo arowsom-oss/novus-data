@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { Container } from '@/components/container';
 import { PageHeader } from '@/components/page-header';
+import { StoryBox } from '@/components/story-box';
 import { ExternalLink, TextLink } from '@/components/text-link';
 import { monitorAndArticlesEnabled } from '@/config/launch';
 import { publication } from '@/config/publication';
@@ -22,11 +23,12 @@ export default function PrivacyPage() {
   return (
     <>
       <PageHeader
+        width="reading"
         title="Privacy"
         lede="What this site does with information, described plainly."
       />
 
-      <Container width="reading" className="mt-12 flex flex-col gap-10">
+      <Container width="reading" className="mt-8 flex flex-col gap-5">
         <Section heading="This site">
           <p>
             The pages you read — the register, the exposure chart, the company and sector pages
@@ -174,11 +176,11 @@ export default function PrivacyPage() {
   );
 }
 
+/** Each part of the policy is a boxed story, so the text sits on a backing. */
 function Section({ heading, children }: { heading: string; children: React.ReactNode }) {
   return (
-    <section>
-      <h2 className="text-heading font-semibold text-fg">{heading}</h2>
-      <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">{children}</div>
-    </section>
+    <StoryBox as="section" level={2} title={heading}>
+      {children}
+    </StoryBox>
   );
 }

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Container } from '@/components/container';
 import { NeedsInput } from '@/components/needs-input';
 import { PageHeader } from '@/components/page-header';
+import { StoryBox } from '@/components/story-box';
 import { SubscribePanel } from '@/components/subscribe-panel';
 import { MailLink, TextLink } from '@/components/text-link';
 import { monitorAndArticlesEnabled } from '@/config/launch';
@@ -33,8 +34,8 @@ export default function AboutPage() {
     <>
       <PageHeader width="reading" title={`About ${publication.name}`} lede={publication.description} />
 
-      <Container width="reading" className="mt-14 flex flex-col gap-14">
-        <Section heading="Who it is for">
+      <Container width="reading" className="mt-8 flex flex-col gap-5">
+        <Section heading="Who it is for" kicker="Readers" id="readers">
           <p>{publication.positioning}</p>
           <p>
             It is written for {publication.primaryReader}. It is also read by{' '}
@@ -42,7 +43,7 @@ export default function AboutPage() {
           </p>
         </Section>
 
-        <Section heading="What it covers">
+        <Section heading="What it covers" kicker="Scope" id="scope">
           <p>
             Novus Data follows the physical and regulatory machinery of trade: shipping and
             freight, chokepoints, ports, trade policy, concentrated industrial inputs, the energy
@@ -63,7 +64,7 @@ export default function AboutPage() {
           </p>
         </Section>
 
-        <Section heading="How it is produced" id="method">
+        <Section heading="How it is produced" kicker="Method" id="method">
           {publication.methodology.map((paragraph) => (
             <p key={paragraph.slice(0, 40)}>{paragraph}</p>
           ))}
@@ -159,13 +160,13 @@ export default function AboutPage() {
           </div> : null}
         </Section>
 
-        <Section heading="Corrections" id="corrections">
+        <Section heading="Corrections" kicker="Standards" id="corrections">
           {publication.corrections.map((paragraph) => (
             <p key={paragraph.slice(0, 40)}>{paragraph}</p>
           ))}
         </Section>
 
-        <Section heading="Who writes it">
+        <Section heading="Who writes it" kicker="Masthead" id="masthead">
           {formatAuthorNames() ? (
             <>
               <p>
@@ -204,7 +205,7 @@ export default function AboutPage() {
           )}
         </Section>
 
-        <Section heading="Contact">
+        <Section heading="Contact" kicker="Write in" id="contact">
           {env.contactEmail ? (
             <p>
               Corrections, questions and sources are welcome at{' '}
@@ -219,27 +220,29 @@ export default function AboutPage() {
         </Section>
       </Container>
 
-      <Container width="reading" className="mt-16">
+      <Container width="reading" className="mt-5">
         <SubscribePanel />
       </Container>
     </>
   );
 }
 
+/** Each part of the page is a boxed story, so the text sits on a backing. */
 function Section({
   heading,
+  kicker,
   id,
   children,
 }: {
   heading: string;
-  id?: string;
+  kicker: string;
+  id: string;
   children: React.ReactNode;
 }) {
   return (
-    <section id={id}>
-      <h2 className="text-heading font-semibold text-fg">{heading}</h2>
-      <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">{children}</div>
-    </section>
+    <StoryBox as="section" level={2} id={id} kicker={kicker} kickerTone="muted" title={heading}>
+      {children}
+    </StoryBox>
   );
 }
 

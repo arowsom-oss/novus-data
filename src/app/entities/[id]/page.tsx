@@ -6,6 +6,7 @@ import { Container } from '@/components/container';
 import { PrintPermalink } from '@/components/print-permalink';
 import { SeveritySwatch } from '@/components/severity-legend';
 import { StatusBadge } from '@/components/status-badge';
+import { StoryBox } from '@/components/story-box';
 import { TextLink } from '@/components/text-link';
 import type { EntityClaim } from '@/lib/disruptions';
 import {
@@ -84,109 +85,125 @@ export default async function EntityPage(props: PageProps<'/entities/[id]'>) {
           </TextLink>
         </p>
 
-        <h1 className="mt-6 text-title font-semibold text-fg">{entity.name}</h1>
+        <div className="story story-lead mt-4">
+          <h1 className="text-title font-semibold text-fg">{entity.name}</h1>
 
-        <p className="mt-4 text-meta text-muted">
-          {entity.ticker ? (
-            <>
-              <span data-numeric>{entity.ticker}</span>
-              {' · '}
-            </>
-          ) : null}
-          {entity.kind === 'sector' ? 'Sector' : entity.sector}
-        </p>
-
-        <p className="mt-6 max-w-measure text-subhead text-muted">
-          {claims.length > 0 ? (
-            <>
-              {claims.length === 1
-                ? 'One tracked disruption currently reaches '
-                : `${claims.length} tracked disruptions currently reach `}
-              {entity.name}. Each assessment below states how.
-            </>
-          ) : (
-            <>
-              No open disruption in the register currently reaches {entity.name}.
-              {resolved.length > 0 ? ' The assessments that did are kept below.' : ''}
-            </>
-          )}
-        </p>
-
-        {claims.length > 0 ? (
-          <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-3 border-t border-hairline pt-5 text-meta">
-            {worstSeverity ? (
-              <div>
-                <dt className="text-muted">Strongest assessment</dt>
-                <dd className="mt-1 flex items-center gap-2 text-fg">
-                  <SeveritySwatch severity={worstSeverity} />
-                  {SEVERITY_LABELS[worstSeverity]}
-                </dd>
-              </div>
+          <p className="text-meta text-muted">
+            {entity.ticker ? (
+              <>
+                <span data-numeric>{entity.ticker}</span>
+                {' · '}
+              </>
             ) : null}
-            <div>
-              <dt className="text-muted">Disruptions reaching it</dt>
-              <dd data-numeric className="mt-1 text-fg">
-                {claims.length}
-              </dd>
-            </div>
-            {assessed ? (
-              <div>
-                <dt className="text-muted">Last assessed</dt>
-                <dd className="mt-1 text-fg">
-                  <time dateTime={lastAssessedAt ?? undefined}>{assessed}</time>
-                </dd>
-              </div>
-            ) : null}
-          </dl>
-        ) : null}
-
-        {/* Phrased against the build, not against "now": the page is static, so
-            a live-sounding day count would freeze at build time and could only
-            ever understate the age. */}
-        {stale ? (
-          <p className="mt-6 border-l-2 border-status-active pl-4 text-meta text-muted">
-            Nothing here had been re-assessed for over{' '}
-            <span data-numeric>{STALE_AFTER_DAYS}</span> days when this page was built, and may
-            have aged further since. Trust the dates on each claim, not the freshness of the page.
+            {entity.kind === 'sector' ? 'Sector' : entity.sector}
           </p>
-        ) : null}
+
+          <p className="max-w-measure text-subhead text-muted">
+            {claims.length > 0 ? (
+              <>
+                {claims.length === 1
+                  ? 'One tracked disruption currently reaches '
+                  : `${claims.length} tracked disruptions currently reach `}
+                {entity.name}. Each assessment below states how.
+              </>
+            ) : (
+              <>
+                No open disruption in the register currently reaches {entity.name}.
+                {resolved.length > 0 ? ' The assessments that did are kept below.' : ''}
+              </>
+            )}
+          </p>
+
+          {claims.length > 0 ? (
+            <dl className="flex flex-wrap gap-x-12 gap-y-3 border-t border-hairline pt-4 text-meta">
+              {worstSeverity ? (
+                <div>
+                  <dt className="text-muted">Strongest assessment</dt>
+                  <dd className="mt-1 flex items-center gap-2 text-fg">
+                    <SeveritySwatch severity={worstSeverity} />
+                    {SEVERITY_LABELS[worstSeverity]}
+                  </dd>
+                </div>
+              ) : null}
+              <div>
+                <dt className="text-muted">Disruptions reaching it</dt>
+                <dd data-numeric className="mt-1 text-fg">
+                  {claims.length}
+                </dd>
+              </div>
+              {assessed ? (
+                <div>
+                  <dt className="text-muted">Last assessed</dt>
+                  <dd className="mt-1 text-fg">
+                    <time dateTime={lastAssessedAt ?? undefined}>{assessed}</time>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
+
+          {/* Phrased against the build, not against "now": the page is static, so
+              a live-sounding day count would freeze at build time and could only
+              ever understate the age. */}
+          {stale ? (
+            <p className="border-l-2 border-status-active pl-4 text-meta text-muted">
+              Nothing here had been re-assessed for over{' '}
+              <span data-numeric>{STALE_AFTER_DAYS}</span> days when this page was built, and may
+              have aged further since. Trust the dates on each claim, not the freshness of the page.
+            </p>
+          ) : null}
+        </div>
       </Container>
 
-      {claims.length > 0 ? (
-        <Container width="reading" className="mt-16">
-          <h2 className="text-heading font-semibold text-fg">
-            How each disruption reaches {entity.name}
-          </h2>
-          <p className="mt-3 max-w-measure text-muted">
-            Worst assessment first. &ldquo;Affected&rdquo; is not a finding, so each entry names
-            the mechanism, how well established it is, when it was last true, and where it comes
-            from.
-          </p>
-          <ul className="mt-8 flex flex-col">
-            {claims.map((claim) => (
-              <ClaimEntry key={claim.disruption.id} claim={claim} />
-            ))}
-          </ul>
-        </Container>
-      ) : null}
+      <Container width="reading" className="mt-5 flex flex-col gap-5">
+        {claims.length > 0 ? (
+          <StoryBox
+            as="section"
+            level={2}
+            id="claims"
+            kicker="Open assessments"
+            kickerTone="muted"
+            title={`How each disruption reaches ${entity.name}`}
+            deck={
+              <p className="text-muted">
+                Worst assessment first. &ldquo;Affected&rdquo; is not a finding, so each entry
+                names the mechanism, how well established it is, when it was last true, and where
+                it comes from.
+              </p>
+            }
+          >
+            <ul className="story-list flex max-w-none flex-col">
+              {claims.map((claim) => (
+                <ClaimEntry key={claim.disruption.id} claim={claim} />
+              ))}
+            </ul>
+          </StoryBox>
+        ) : null}
 
-      {resolved.length > 0 ? (
-        <Container width="reading" className="mt-16">
-          <h2 className="text-heading font-semibold text-fg">Resolved</h2>
-          <p className="mt-3 max-w-measure text-muted">
-            These disruptions reached {entity.name} and have since resolved. They stay on the
-            record: an assessment that simply vanishes is indistinguishable from one that was
-            wrong.
-          </p>
-          <ul className="mt-8 flex flex-col">
-            {resolved.map((claim) => (
-              <ClaimEntry key={claim.disruption.id} claim={claim} />
-            ))}
-          </ul>
-        </Container>
-      ) : null}
+        {resolved.length > 0 ? (
+          <StoryBox
+            as="section"
+            level={2}
+            id="resolved"
+            kicker="On the record"
+            kickerTone="muted"
+            title="Resolved"
+            deck={
+              <p className="text-muted">
+                These disruptions reached {entity.name} and have since resolved. They stay on the
+                record: an assessment that simply vanishes is indistinguishable from one that was
+                wrong.
+              </p>
+            }
+          >
+            <ul className="story-list flex max-w-none flex-col">
+              {resolved.map((claim) => (
+                <ClaimEntry key={claim.disruption.id} claim={claim} />
+              ))}
+            </ul>
+          </StoryBox>
+        ) : null}
 
-      <Container width="reading" className="mt-16">
         <p className="max-w-measure text-muted">
           <TextLink href="/exposure">See {entity.name} alongside every other tracked name</TextLink>
           , or read{' '}
@@ -194,7 +211,7 @@ export default async function EntityPage(props: PageProps<'/entities/[id]'>) {
         </p>
       </Container>
 
-      <Container width="reading" className="mt-10">
+      <Container width="reading" className="mt-8">
         <PrintPermalink path={`/entities/${entity.id}`} className="mb-2" />
         <p className="max-w-measure text-meta text-muted">
           Novus Data publishes analysis and commentary, not investment advice. Nothing here is a
@@ -210,7 +227,7 @@ function ClaimEntry({ claim }: { claim: EntityClaim }) {
   const { disruption, exposure } = claim;
 
   return (
-    <li id={`disruption-${disruption.id}`} className="border-t border-hairline py-6">
+    <li id={`disruption-${disruption.id}`} className="py-5 first:pt-0">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <StatusBadge status={disruption.status} />
         <span className="kicker kicker-muted">{CATEGORY_LABELS[disruption.category]}</span>

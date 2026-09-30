@@ -672,6 +672,39 @@ be used rather than reinvented:
 page title is decoration" holds for a web page, but a masthead is exactly where
 a rule carries meaning: it closes the title block and opens the content.
 
+### The story box — amended by the author (29 September 2026)
+
+The author's brief: the site "looks too vibe coded", and text should sit on a
+backing, in a boxed-article format. So **text no longer floats on `--ink`.**
+Every block of reading text sits in a story box, `StoryBox` in
+`src/components/story-box.tsx`, styled by `.story` in `globals.css`:
+
+- **One grammar:** kicker, headline, optional deck, body, footer, in that
+  order. Links, dates and counts go in the footer, where a paper puts a
+  story's dateline. `story-lead` is the heavier-ruled main story;
+  `story-compact` is a rail or list box.
+- **Square corners, no shadow, a 2px `--accent` top rule** (4px on the lead)
+  and a `--border-strong` frame. A rounded card with a drop shadow is the
+  default component of a generated page; a ruled box is what a newspaper
+  uses. Do not round it or add a shadow in a polish pass.
+- **`.story` is in `@layer components` on purpose**, so a utility at the call
+  site (a column span, `gap-0`) still wins. This is the opposite of
+  `.prose-novus`, and for the opposite reason: nothing needs to beat `.story`.
+- **The home page is a front page, not a landing page.** A nameplate (the
+  page's `h1`, closed by a double rule), a lead story with a rail beside it,
+  then labelled bands of boxes (`SectionLabel`). The lead is chosen, never
+  written: the top open register entry, else the latest briefing, else the
+  case for the site. The hero, the two call-to-action buttons, "What we do",
+  the four equal pillars and the decorative grid-line backdrop (`.grid-field`)
+  were the template tells and are gone. Do not bring back a hero.
+- **Lists stay one object.** The briefing archive is one box with hairlines
+  between issues (a sequence reads as aligned columns); the register is one
+  box per entry (each entry is a story).
+- `ActionLink`'s primary variant sits on `--surface-2` so it still reads as a
+  control inside a `--surface` box.
+- **Print:** surfaces already collapse to white, so a box prints as a grey
+  frame with its accent top rule. Compact boxes do not split across pages.
+
 Tailwind utility names map onto these: `bg-ink`, `bg-surface`, `bg-surface-2`,
 `text-fg`, `text-muted`, `text-link`, `border-hairline`, `border-rule`,
 `border-accent`.

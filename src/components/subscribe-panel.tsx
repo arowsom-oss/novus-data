@@ -1,4 +1,5 @@
 import { ExternalActionLink, UnavailableAction } from '@/components/action';
+import { StoryBox } from '@/components/story-box';
 import { publication } from '@/config/publication';
 import { env } from '@/lib/env';
 
@@ -10,50 +11,50 @@ import { env } from '@/lib/env';
  */
 export function SubscribePanel({
   heading = 'Subscribe',
-  tone = 'panel',
+  level = 2,
+  className,
 }: {
   heading?: string;
-  /** `panel` for a raised block, `plain` for the end of an issue. */
-  tone?: 'panel' | 'plain';
+  level?: 2 | 3;
+  className?: string;
 }) {
   // Only ever states a schedule that has actually been committed to.
   const cadenceLine = publication.cadence
     ? `Published ${publication.cadence}, by email. Free.`
     : 'Delivered by email. Free.';
 
+  const action = env.subscribeUrl ? (
+    <div>
+      <ExternalActionLink href={env.subscribeUrl}>Subscribe on Beehiiv</ExternalActionLink>
+    </div>
+  ) : (
+    <div>
+      <UnavailableAction>Subscribe on Beehiiv</UnavailableAction>
+      <p className="mt-3 max-w-[52ch] text-meta text-muted">
+        No subscribe link is configured yet. Set{' '}
+        <code className="[overflow-wrap:anywhere]">NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL</code> to
+        enable this.
+      </p>
+    </div>
+  );
+
   return (
-    <section
-      aria-labelledby="subscribe-heading"
-      className={
-        tone === 'panel'
-          ? 'border border-hairline bg-surface p-7 sm:p-10'
-          : 'border-t border-hairline pt-10'
+    <StoryBox
+      as="section"
+      id="subscribe"
+      level={level}
+      kicker={publication.newsletter.name}
+      title={heading}
+      className={className}
+      footer={
+        <span>
+          Your address goes to Beehiiv, which sends the emails. Every issue carries an unsubscribe
+          link.
+        </span>
       }
     >
-      <h2
-        id="subscribe-heading"
-        className="text-heading font-semibold text-fg"
-      >
-        {heading}
-      </h2>
-      <p className="mt-3 max-w-[52ch] text-muted">{cadenceLine}</p>
-
-      <div className="mt-6">
-        {env.subscribeUrl ? (
-          <ExternalActionLink href={env.subscribeUrl}>Subscribe on Beehiiv</ExternalActionLink>
-        ) : (
-          <>
-            <UnavailableAction>Subscribe on Beehiiv</UnavailableAction>
-            <p className="mt-3 max-w-[52ch] text-meta text-muted">
-              No subscribe link is configured yet. Set{' '}
-              <code className="[overflow-wrap:anywhere]">
-                NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL
-              </code>{' '}
-              to enable this.
-            </p>
-          </>
-        )}
-      </div>
-    </section>
+      <p>{cadenceLine}</p>
+      {action}
+    </StoryBox>
   );
 }

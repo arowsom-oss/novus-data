@@ -410,34 +410,118 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Hero backdrop
+   The story box
 
-   Gridlines, because this is a site about measurement — not an ornament. One
-   repeating-linear-gradient plus a mask that fades it out before it reaches
-   the headline: no image to load, no layout cost, no JavaScript, and nothing
-   that moves. Purely decorative, so it is aria-hidden at the call site and
-   removed where decoration would fight legibility.
+   Text sits on a backing, the way a paper boxes a story, instead of floating
+   on the page ground. One box grammar for the whole site (StoryBox): kicker,
+   headline, deck, body, footer. The top rule is --accent in its sanctioned
+   structural role; the frame is --border-strong so a box reads as an object,
+   not as a hairline list item.
+
+   Square corners and no shadow, deliberately. A rounded card with a drop
+   shadow is the default component of a generated page; a ruled box is what a
+   newspaper uses, and the whole brief is that this should read as one.
+
+   Layered, so a utility at the call site (a column span, a margin) still
+   wins over it.
    --------------------------------------------------------------------------- */
+@layer components {
+  .story {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+    background-color: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-top: 2px solid var(--accent);
+    padding: 1.25rem 1.25rem 1.125rem;
+  }
 
-.grid-field {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: repeating-linear-gradient(
-    to right,
-    var(--border) 0,
-    var(--border) 1px,
-    transparent 1px,
-    transparent 5.5rem
-  );
-  /* Fades from the top-left, where the masthead sits, out to nothing well
-     before the body copy — so text always sits on flat --ink, never on a line.
-     The ellipse is sized in rem rather than per cent deliberately: a percentage
-     mask scales with the hero, which is roughly twice as tall on a phone, and
-     the lines would then run the whole way down behind the headline. */
-  -webkit-mask-image: radial-gradient(38rem 20rem at 6rem -4rem, #000 0%, transparent 72%);
-  mask-image: radial-gradient(38rem 20rem at 6rem -4rem, #000 0%, transparent 72%);
+  @media (min-width: 40rem) {
+    .story {
+      padding: 1.625rem 1.875rem 1.375rem;
+    }
+  }
+
+  /* The lead story carries the heaviest rule on the page. */
+  .story-lead {
+    border-top-width: 4px;
+  }
+
+  .story-compact {
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 40rem) {
+    .story-compact {
+      padding: 1.25rem 1.5rem 1.125rem;
+    }
+  }
+
+  .story-title {
+    font-size: var(--text-heading);
+    line-height: var(--text-heading--line-height);
+    letter-spacing: var(--text-heading--letter-spacing);
+    font-weight: 600;
+    color: var(--text);
+    text-wrap: balance;
+  }
+
+  .story-lead .story-title {
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    letter-spacing: var(--text-display--letter-spacing);
+    max-width: 18ch;
+  }
+
+  .story-compact .story-title {
+    font-size: 1.125rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .story-deck {
+    font-size: var(--text-subhead);
+    line-height: var(--text-subhead--line-height);
+    color: var(--text);
+    max-width: 60ch;
+  }
+
+  .story-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    color: var(--text-muted);
+    font-size: 0.96875rem;
+    line-height: 1.6;
+  }
+
+  .story-body > p,
+  .story-body > ul,
+  .story-body > ol,
+  .story-body > dl {
+    max-width: var(--container-measure);
+  }
+
+  /* Links and dates. margin-top:auto pins footers in a row of boxes to one
+     line even when the stories above them run to different lengths. */
+  .story-foot {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.5rem;
+    padding-top: 0.875rem;
+    border-top: 1px solid var(--border);
+    font-size: var(--text-meta);
+    line-height: var(--text-meta--line-height);
+    color: var(--text-muted);
+  }
+
+  /* A list of stories inside one box: hairlines between the items. */
+  .story-list > li + li {
+    border-top: 1px solid var(--border);
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -535,9 +619,6 @@
     );
   }
   .exposure-cell { forced-color-adjust: none; }
-
-  /* Decoration is the first thing to go when a reader has asked for contrast. */
-  .grid-field { display: none; }
 }
 
 /* Motion responds to user action only, and not at all when the reader has
@@ -682,8 +763,11 @@
     break-after: avoid;
   }
 
-  /* Decoration, and anything whose only job is on a screen. */
-  .grid-field {
-    display: none;
+  /* On paper a story box keeps its frame (--border-strong prints as grey) and
+     drops the fill with the rest of the surfaces above. The accent top rule
+     stays: it is what tells a boxed story apart from a table. Short boxes do
+     not split across a page; a long one may, or it would leave a blank page. */
+  .story-compact {
+    break-inside: avoid;
   }
 }
