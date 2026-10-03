@@ -5,10 +5,12 @@ decide for me. Written to be read once, in order.
 
 ## Launch check — 3 October 2026
 
-- The organisation repository, `novus-data/novus-data`, contains Gavin's merged
-  boxed-story redesign (PR #13). Vercel still points at `arowsom-oss/novus-data`,
-  whose production branch does not contain that merge. The default branch in
-  both repositories is `claude/practical-einstein-tzfg55`.
+- The organisation repository, `novus-data/novus-data`, remains the source of
+  record. Gavin's boxed-story redesign (PR #13) and the RSS/content fixes (PR #15)
+  were mirrored into the deployed fork through `arowsom-oss/novus-data` PR #2.
+  The two default branches have identical file trees after these merges. Vercel
+  still points at the fork; changing that Git connection remains open. Both
+  default branches are named `claude/practical-einstein-tzfg55`.
 - Every fetched branch still has an empty issue archive and no register entries.
   Beehiiv has one empty "New post" draft; the publication's public RSS feed
   returned HTTP 200 with zero items. The redesign is finished code, not evidence
@@ -29,8 +31,14 @@ decide for me. Written to be read once, in order.
   Then start a new Claude Code session with `novus-data/novus-data` selected.
 - A failed fork preview was traced to the missing
   `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` in the **Preview** environment, rather than
-  a commit-author restriction. Production inputs passed the local production
-  build. Keep the launch guard enabled while correcting preview configuration.
+  a commit-author restriction. The existing variable now covers **Production
+  and Preview**; its redeployment succeeded with the launch guard enabled.
+- The production deployment from fork commit `2d64e27` is ready on
+  `www.novusdata.news`. Live checks passed for home, About, Contact, Privacy,
+  the feeds and sitemap. Monitor, Articles, direct article pages, article social
+  cards and `/live.json` return 404. The signup button opened the custom-domain
+  Beehiiv form, and Contact shows the project address. The earlier privacy draft
+  (fork PR #1) was closed after its change shipped in PR #2.
 
 ---
 
