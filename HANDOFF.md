@@ -8,9 +8,13 @@ decide for me. Written to be read once, in order.
 - The organisation repository, `novus-data/novus-data`, remains the source of
   record. Gavin's boxed-story redesign (PR #13) and the RSS/content fixes (PR #15)
   were mirrored into the deployed fork through `arowsom-oss/novus-data` PR #2.
+  The subsequent source-identifier retention fix shipped through organisation
+  PR #16 and fork PR #3.
   The two default branches have identical file trees after these merges. Vercel
-  still points at the fork; changing that Git connection remains open. Both
-  default branches are named `claude/practical-einstein-tzfg55`.
+  still points at the fork. Its organisation repository selector offers only
+  **Request access** for `novus-data`; an organisation owner must approve Vercel
+  access before that Git connection can change. Both default branches are named
+  `claude/practical-einstein-tzfg55`.
 - Every fetched branch still has an empty issue archive and no register entries.
   Beehiiv has one empty "New post" draft; the publication's public RSS feed
   returned HTTP 200 with zero items. The redesign is finished code, not evidence
@@ -33,7 +37,7 @@ decide for me. Written to be read once, in order.
   `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` in the **Preview** environment, rather than
   a commit-author restriction. The existing variable now covers **Production
   and Preview**; its redeployment succeeded with the launch guard enabled.
-- The production deployment from fork commit `2d64e27` is ready on
+- The production deployment from fork commit `bc458d8` is ready on
   `www.novusdata.news`. Live checks passed for home, About, Contact, Privacy,
   the feeds and sitemap. Monitor, Articles, direct article pages, article social
   cards and `/live.json` return 404. The signup button opened the custom-domain
@@ -94,7 +98,7 @@ All twelve milestones of the brief, plus a review preview that was not in it.
 | 3 Content layer, `/debug/content` | Done |
 | 4 Sync script | Tested against isolated full-text and summary feeds; real dry run returned zero items. Full-text output still unverified |
 | 5 Site shell, 404, error boundaries | Done |
-| 6 Deployment instructions | `DEPLOY.md`. Not executed — Rule 7 |
+| 6 Deployment instructions | `DEPLOY.md`; site deployed on the custom domain. Switching Vercel from the fork to the organisation repository still requires owner approval |
 | 7 Home page, including pre-launch state | Done |
 | 8 Archive and issue pages | Done |
 | 9 Editorial and information pages | Done |
@@ -115,21 +119,27 @@ Tailwind CSS **4.3.3**, TypeScript 5.9.3, Node 22.22.2 (`.nvmrc` pins 22).
 
 ---
 
-## 3. Every unresolved input
+## 3. Launch inputs and unresolved publication facts
 
-These are the questions I could not answer for you. They are also encoded in
-`INPUT_LEDGER` (`src/config/input-ledger.ts:43`), which drives `/debug/content`
-and the review preview's panel, so this list cannot silently go stale.
+Required launch inputs and the remaining editorial questions are listed below.
+`INPUT_LEDGER` (`src/config/input-ledger.ts:43`) drives the build guard,
+`/debug/content` and the review preview's panel.
 
-### Blocks a production build
+### Required launch inputs — supplied
 
 The editor's name is supplied: **Gavin McGreevy**, confirmed 24 September
-2026. Two inputs remain.
+2026. The subscribe URL and project contact address are configured through
+Vercel's **Production and Preview** environment variables. Their values stay
+out of Git; a new environment still needs both before its build can pass.
 
-| Input | Where | What I need |
+| Input | Where | State |
 |---|---|---|
-| Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | Supply the real Beehiiv subscribe page through the environment |
-| Contact email | `NEXT_PUBLIC_CONTACT_EMAIL` | The address you are content to publish |
+| Subscribe URL | `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` | Supplied for Production and Preview; the custom-domain signup form was checked live |
+| Contact email | `NEXT_PUBLIC_CONTACT_EMAIL` | Project address supplied for Production and Preview and checked on the live Contact page |
+
+`NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_BEEHIIV_HOME_URL` and
+`NEXT_PUBLIC_BEEHIIV_FEED_URL` are also configured for the deployed site. The
+canonical site origin and newsletter footer links have been checked live.
 
 ### Drafted by me — confirm or rewrite
 
@@ -142,6 +152,11 @@ The editor's name is supplied: **Gavin McGreevy**, confirmed 24 September
 | Methodology | `publication.ts` → `methodology` | **Three paragraphs claiming how the work is done. Read them line by line — if any is not true yet, cut it** |
 | The seven tracked topics | `src/config/coverage.ts` | Drafted from your description of the project. Cut, reorder or rewrite freely |
 
+`BEEHIIV_RSS_URL` has been supplied: the publication's public feed is
+`https://rss.beehiiv.com/feeds/q2HQCm9T6z.xml`. The real dry run reached it and
+returned zero items. The archive is empty; full-text output still needs a
+published issue to verify. See §6.
+
 ### Never supplied — the site omits the claim entirely
 
 | Input | Consequence today |
@@ -149,9 +164,6 @@ The editor's name is supplied: **Gavin McGreevy**, confirmed 24 September
 | Author bio facts (`author.credentials`) | `/about` states nothing about you beyond your name |
 | Publishing cadence (`cadence`) | Subscribe blocks say "Delivered by email. Free." and claim **no schedule**. Set it only once you are actually keeping one |
 | First issue date (`firstIssueDate`) | The pre-launch hero announces no date |
-| `NEXT_PUBLIC_BEEHIIV_HOME_URL`, `NEXT_PUBLIC_BEEHIIV_FEED_URL` | Those footer links do not render |
-| `NEXT_PUBLIC_SITE_URL` | Falls back to `$VERCEL_URL`, then localhost. Set it at domain cutover |
-| `BEEHIIV_RSS_URL` | **The archive is empty and the feed was never inspected.** See 6 |
 | Logo file | Wordmark and icons are set typographically. See 4.4 |
 | Three visual reference sites | Design follows the brand spec and the editorial references named in the brief |
 
@@ -641,22 +653,27 @@ positioning and the z-index.
 
 ---
 
-## 6. Feed findings — not yet established
+## 6. Feed findings — connected; full text still unverified
 
-The brief asks for four answers about the Beehiiv feed before Milestone 4. No
-`BEEHIIV_RSS_URL` was supplied, so **none of them could be answered**, and the
-archive is empty as a result.
+The publication's public feed is
+[https://rss.beehiiv.com/feeds/q2HQCm9T6z.xml](https://rss.beehiiv.com/feeds/q2HQCm9T6z.xml).
+A real dry run reached it and returned HTTP 200 with **zero items**. Beehiiv has
+one empty "New post" draft, so there is no published issue to import.
 
-1. How many `<item>` elements the feed returns — **unknown**.
-2. Whether `content:encoded` carries full post HTML or only a summary — **unknown**.
-3. The exact format of `<link>` values — **unknown**.
-4. Whether `<enclosure>` or `media:content` supplies a cover image — **unknown**.
+1. How many `<item>` elements the feed returns — **zero at the 3 October 2026 check**.
+2. Whether `content:encoded` carries full post HTML or only a summary — **unknown until an issue is published**.
+3. The exact format of item `<link>` values — **unknown until an issue is published**.
+4. Whether `<enclosure>` or `media:content` supplies a cover image — **unknown until an issue is published**.
 
 **This matters more than it looks.** Whatever the sync script writes into
-`content/issues/` is what the repository owns permanently. If the feed carries
-summaries only, the archive captures summaries only, and the issue pages will
-have no body. The script warns per item when a body is missing, so the first real
-run answers question 2 immediately.
+`content/issues/` is what the repository owns permanently. If any pending issue
+has a missing or empty `content:encoded` body after sanitisation, the script
+prints `has no content:encoded body` and exits non-zero **before writing any
+issue**, including during a dry run or forced update. Descriptions are never
+substituted for bodies, and an existing archived body is preserved on failure.
+After the first issue is published, run `npm run sync-issues -- --dry-run` and
+check that its feed body contains the complete issue before running the real
+sync. A non-empty body alone does not prove it contains the full text.
 
 **A Beehiiv feed exposes only a window of recent items — commonly about twenty.**
 Any issue already published is recoverable only while it is still in that window.
@@ -664,12 +681,16 @@ If issues exist, run the sync soon.
 
 The script was verified end to end against a local server serving a Beehiiv-shaped
 feed — CDATA titles, `content:encoded` bodies, `enclosure` and `media:content`
-images, categories, and a deliberately summary-only item. Confirmed: first run
-writes; second run skips everything and writes nothing; `--force <slug>` rewrites
-exactly one file and keeps its original filename so archive ordering does not
-shift; `--dry-run` writes nothing; a fetch failure and an unset URL each print a
-readable message and exit non-zero; `<script>`, `<style>`, `<iframe>`, inline
-styles, event handlers and `javascript:` URLs are all stripped.
+images, categories, and a deliberately summary-only item. Confirmed: a full-text
+run writes; a repeat skips existing issues; missing bodies abort the whole run
+without partial writes; `--force <slug>` rewrites exactly one issue and keeps its
+original filename and permanent slug. Known GUIDs and source URLs survive a
+temporary omission from the feed. Unknown or empty force targets and ambiguous
+source identities fail before writes. `--dry-run` writes nothing; a fetch
+failure and an unset URL each print a readable message and exit non-zero;
+`<script>`, `<style>`, `<iframe>`, inline styles, event handlers and
+`javascript:` URLs are all stripped. These isolated cases prove importer
+behaviour; they do not establish the publication's full-text RSS output.
 
 ---
 
