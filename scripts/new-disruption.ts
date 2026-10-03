@@ -36,6 +36,7 @@ import {
   ID_PATTERN,
   SEVERITIES,
 } from '@/lib/disruptions/types';
+import { isHttpUrl } from '@/lib/url';
 import {
   blank,
   colour,
@@ -43,6 +44,7 @@ import {
   heading,
   info,
   isIsoDate,
+  loadEnvLocal,
   ok,
   slugify,
   today,
@@ -50,6 +52,9 @@ import {
   yamlString,
   type Prompter,
 } from './lib/cli';
+
+// Resolve the register path from the same environment doctor and review read.
+loadEnvLocal();
 
 /**
  * Where entries are written.
@@ -203,9 +208,9 @@ async function askDate(rl: Prompter, question: string, fallback?: string): Promi
 async function askUrl(rl: Prompter, question: string): Promise<string> {
   return ask(rl, question, {
     validate: (value) =>
-      /^https?:\/\/\S+$/i.test(value)
+      isHttpUrl(value)
         ? null
-        : 'Must start with http:// or https:// — the loader drops anything else.',
+        : 'Must be a valid absolute http:// or https:// URL — the loader drops anything else.',
   });
 }
 

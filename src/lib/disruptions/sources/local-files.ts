@@ -19,6 +19,7 @@ import matter from 'gray-matter';
 import { publication } from '@/config/publication';
 // Pure reference data, not the live layer's network code: which place ids exist.
 import { nodeById } from '@/lib/live/nodes';
+import { isHttpUrl } from '@/lib/url';
 import type {
   Confidence,
   Disruption,
@@ -183,8 +184,8 @@ function parseSources(raw: unknown, label: string, warnings: string[]): Source[]
       warn(warnings, `${label}: dropped a source missing title, url or publisher.`);
       continue;
     }
-    if (!/^https?:\/\//i.test(url)) {
-      warn(warnings, `${label}: dropped source "${title}" — url must be http(s).`);
+    if (!isHttpUrl(url)) {
+      warn(warnings, `${label}: dropped source "${title}" — url must be a valid absolute http(s) URL.`);
       continue;
     }
 

@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl('/privacy') },
 };
 
+/*
+ * This page is a plain description of how the site actually behaves today. It
+ * is deliberately not drafted as a legal privacy policy, and it has not been
+ * reviewed by anyone qualified to write one. If analytics, embeds, a comment
+ * system or any third-party script is ever added, this page stops being
+ * accurate the moment that change ships — update it in the same change.
+ */
 export default function PrivacyPage() {
   // The page describes what this deployment actually does. With no account
   // store configured there is genuinely nothing held, and saying otherwise
@@ -119,9 +126,8 @@ export default function PrivacyPage() {
               deployment, and nothing about you is collected for accounts.
             </p>
             <p>
-              The signed-in experience can be designed before accounts are switched on. When
-              accounts go live, this page will describe exactly what is held and why in the same
-              release, not afterwards.
+              When accounts go live, this page will describe exactly what is held and why in the
+              same release, not afterwards.
             </p>
           </Section>
         )}

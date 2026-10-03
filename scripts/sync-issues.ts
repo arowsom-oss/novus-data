@@ -18,18 +18,20 @@
  */
 
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { XMLParser } from 'fast-xml-parser';
+import matter from 'gray-matter';
 import sanitizeHtml from 'sanitize-html';
 
 import { POST_KIND_LABELS, kindFor, postPath, type PostKind } from '@/lib/content/types';
 
-import { plural, yamlString } from './lib/cli';
+import { loadEnvLocal, plural, yamlString } from './lib/cli';
 
 const ISSUES_DIR = path.join(process.cwd(), 'content', 'issues');
 const EXCERPT_TARGET_LENGTH = 200;
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 // --- argument parsing -------------------------------------------------------
 
@@ -61,6 +63,10 @@ function parseArgs(argv: string[]): Options {
     } else {
       fail(`Unrecognised argument: ${arg}`);
     }
+  }
+
+  if (options.forceSlug !== null && !SLUG_PATTERN.test(options.forceSlug)) {
+    fail('--force needs a non-empty URL-safe slug, e.g. --force panama-transits-recover.');
   }
 
   return options;
@@ -311,7 +317,9 @@ function sanitiseBody(html: string | null): string | null {
     // Collapse those so the stored file stays readable for hand-editing.
     .replace(/(?:[ \t]*\r?\n){3,}/g, '\n\n')
     .trim();
-  return cleaned.length > 0 ? cleaned : null;
+  const readableText = stripHtml(cleaned).replace(/&(?:nbsp|#0*160|#x0*a0);/gi, ' ').trim();
+  // Empty markup is not an issue body. An image-only issue still has content.
+  return readableText || /<img\b[^>]*\ssrc="[^"]+"/.test(cleaned) ? cleaned : null;
 }
 
 // --- writing ----------------------------------------------------------------
@@ -330,6 +338,7 @@ function renderIssueFile(fields: {
   publishedAt: string | null;
   excerpt: string | null;
   beehiivUrl: string | null;
+  beehiivGuid: string | null;
   coverImageUrl: string | null;
   tags: string[];
   body: string | null;
@@ -342,6 +351,7 @@ function renderIssueFile(fields: {
     `publishedAt: ${yamlString(fields.publishedAt)}`,
     `excerpt: ${yamlString(fields.excerpt)}`,
     `beehiivUrl: ${yamlString(fields.beehiivUrl)}`,
+    `beehiivGuid: ${yamlString(fields.beehiivGuid)}`,
     `coverImageUrl: ${yamlString(fields.coverImageUrl)}`,
     fields.tags.length === 0
       ? 'tags: []'
@@ -353,38 +363,83 @@ function renderIssueFile(fields: {
   return `${frontmatter}${fields.body ?? ''}\n`;
 }
 
-/** Existing slug → filename, so a re-sync can recognise what it already has. */
-async function readExisting(): Promise<{ bySlug: Map<string, string>; maxPrefix: number }> {
-  const bySlug = new Map<string, string>();
+interface ExistingIssue {
+  fileName: string;
+  guid: string | null;
+  link: string | null;
+}
+
+/** Source identifiers stay separate: an opaque GUID is not necessarily a URL. */
+function sourceIdentities(guid: string | null, link: string | null): string[] {
+  const identities: string[] = [];
+  if (guid) identities.push(`guid:${guid}`);
+  if (link) identities.push(`link:${link}`);
+  return identities;
+}
+
+/** Frontmatter slugs are permanent URLs; filenames only supply the sort prefix. */
+async function readExisting(): Promise<{
+  bySlug: Map<string, ExistingIssue>;
+  byIdentity: Map<string, string>;
+  maxPrefix: number;
+}> {
+  const bySlug = new Map<string, ExistingIssue>();
+  const byIdentity = new Map<string, string>();
   let maxPrefix = 0;
 
-  if (!existsSync(ISSUES_DIR)) return { bySlug, maxPrefix };
+  if (!existsSync(ISSUES_DIR)) return { bySlug, byIdentity, maxPrefix };
 
-  for (const name of await readdir(ISSUES_DIR)) {
+  for (const name of (await readdir(ISSUES_DIR)).sort()) {
     if (!name.endsWith('.md')) continue;
     const match = name.match(/^(\d+)-(.+)\.md$/);
-    if (match) {
-      maxPrefix = Math.max(maxPrefix, Number(match[1]));
-      bySlug.set(match[2], name);
-    } else {
-      bySlug.set(name.replace(/\.md$/, ''), name);
+    if (match) maxPrefix = Math.max(maxPrefix, Number(match[1]));
+
+    let data: Record<string, unknown>;
+    try {
+      data = matter(await readFile(path.join(ISSUES_DIR, name), 'utf8')).data;
+    } catch (error) {
+      fail(`Cannot read frontmatter in content/issues/${name}: ${error instanceof Error ? error.message : String(error)}. Nothing was written.`);
     }
+
+    const slug = typeof data.slug === 'string' ? data.slug.trim() : '';
+    if (!SLUG_PATTERN.test(slug)) {
+      fail(`content/issues/${name} has no valid frontmatter slug. Fix it before syncing; nothing was written.`);
+    }
+    const duplicate = bySlug.get(slug);
+    if (duplicate) {
+      fail(`content/issues/${name} and ${duplicate.fileName} both use slug "${slug}". Resolve the duplicate permanent URL before syncing; nothing was written.`);
+    }
+
+    const existing = {
+      fileName: name,
+      guid: text(data.beehiivGuid),
+      link: text(data.beehiivUrl) ?? text(data.externalUrl),
+    };
+    for (const identity of sourceIdentities(existing.guid, existing.link)) {
+      const otherSlug = byIdentity.get(identity);
+      if (otherSlug) {
+        fail(`content/issues/${name} and ${bySlug.get(otherSlug)?.fileName} share a Beehiiv source identifier. Resolve the duplicate source before syncing; nothing was written.`);
+      }
+      byIdentity.set(identity, slug);
+    }
+    bySlug.set(slug, existing);
   }
 
-  return { bySlug, maxPrefix };
+  return { bySlug, byIdentity, maxPrefix };
 }
 
 // --- main -------------------------------------------------------------------
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
+  loadEnvLocal();
 
   const feedUrl = process.env.BEEHIIV_RSS_URL?.trim();
   if (!feedUrl) {
     fail(
       'BEEHIIV_RSS_URL is not set.\n' +
         '  Add it to .env.local (it is only ever read by this script, never by the site):\n' +
-        '    BEEHIIV_RSS_URL=https://yourpublication.beehiiv.com/feed',
+        '    BEEHIIV_RSS_URL=https://rss.beehiiv.com/feeds/q2HQCm9T6z.xml',
     );
   }
 
@@ -409,42 +464,63 @@ async function main(): Promise<void> {
   console.log(`Feed contains ${plural(items.length, 'item')}.`);
 
   if (items.length === 0) {
-    console.log('Nothing to do.');
+    if (options.forceSlug) fail(`--force ${options.forceSlug} matched no item in the feed. Nothing was written.`);
+    console.log('Nothing to sync. Full-text support cannot be checked until an issue is published.');
     return;
   }
 
-  const { bySlug, maxPrefix } = await readExisting();
+  const { bySlug, byIdentity, maxPrefix } = await readExisting();
 
-  // Assign slugs first so collisions inside one run are resolved before any
-  // prefix numbering happens.
-  const takenSlugs = new Set(bySlug.keys());
+  // Never suffix a permanent URL based on feed order. Match stored source
+  // identifiers first, and stop on ambiguity rather than skipping a new issue.
+  const seenSlugs = new Set<string>();
+  const seenIdentities = new Set<string>();
   const resolved = items.map((item) => {
-    const base = deriveSlug(item);
-    let slug = base;
-    let suffix = 2;
-
-    const isForced = options.forceSlug !== null && base === options.forceSlug;
-    while (takenSlugs.has(slug) && !isForced) {
-      // Only ever collides for genuinely different items that derive the same
-      // slug; an item already on disk is skipped below, not renamed.
-      if (bySlug.has(slug)) break;
-      slug = `${base}-${suffix}`;
-      suffix += 1;
+    const identities = sourceIdentities(item.guid, item.link);
+    if (identities.length === 0) {
+      fail(`Feed item "${item.title}" has neither a link nor a GUID. A stable source identifier is required; nothing was written.`);
+    }
+    const knownSlugs = new Set<string>();
+    for (const identity of identities) {
+      if (seenIdentities.has(identity)) {
+        fail(`Feed item "${item.title}" repeats a source identifier. Check the feed for duplicate items; nothing was written.`);
+      }
+      seenIdentities.add(identity);
+      const knownSlug = byIdentity.get(identity);
+      if (knownSlug) knownSlugs.add(knownSlug);
+    }
+    if (knownSlugs.size > 1) {
+      fail(`Feed item "${item.title}" matches different archived issues by GUID and link. Check their Beehiiv identifiers; nothing was written.`);
     }
 
-    takenSlugs.add(slug);
+    const slug = knownSlugs.values().next().value ?? deriveSlug(item);
+    const existing = bySlug.get(slug);
+    if (existing && knownSlugs.size === 0) {
+      fail(`Feed item "${item.title}" derives slug "${slug}", already used by ${existing.fileName}, but its source identifiers do not match. Check beehiivUrl and beehiivGuid before syncing; nothing was written.`);
+    }
+    if (seenSlugs.has(slug)) {
+      fail(`More than one feed item resolves to slug "${slug}". Give the posts distinct source URLs; nothing was written.`);
+    }
+
+    seenSlugs.add(slug);
     return { item, slug };
   });
 
+  if (options.forceSlug && !resolved.some(({ slug }) => slug === options.forceSlug)) {
+    fail(`--force ${options.forceSlug} matched no item in the feed. Nothing was written.`);
+  }
+
   const toWrite: IssueFile[] = [];
   const skipped: string[] = [];
+  const missingBodies: string[] = [];
 
   // New issues are numbered in publication order, so the filename prefix is a
   // reliable sort key even when the feed returns items newest-first.
   const pending = resolved
     .filter(({ slug }) => {
+      if (options.forceSlug) return slug === options.forceSlug;
       const exists = bySlug.has(slug);
-      if (exists && slug !== options.forceSlug) {
+      if (exists) {
         skipped.push(slug);
         return false;
       }
@@ -462,7 +538,7 @@ async function main(): Promise<void> {
     const overwriting = bySlug.get(slug);
     // A forced re-pull keeps the file it already had, prefix included, so the
     // archive's sort order does not shift underneath a permanent URL.
-    const fileName = overwriting ?? `${String(++nextPrefix).padStart(4, '0')}-${slug}.md`;
+    const fileName = overwriting?.fileName ?? `${String(++nextPrefix).padStart(4, '0')}-${slug}.md`;
 
     const body = sanitiseBody(item.contentHtml);
     const publishedAt = derivePublishedAt(item);
@@ -474,6 +550,8 @@ async function main(): Promise<void> {
       console.warn(
         `  warning: ${slug} has no content:encoded body. The feed may carry summaries only.`,
       );
+      missingBodies.push(slug);
+      continue;
     }
     const noAlt = imagesWithoutAlt(body);
     if (noAlt.length > 0) {
@@ -497,11 +575,16 @@ async function main(): Promise<void> {
         publishedAt,
         excerpt: deriveExcerpt(item),
         beehiivUrl: item.link,
+        beehiivGuid: item.guid,
         coverImageUrl: item.coverImageUrl,
         tags: item.categories,
         body,
       }),
     });
+  }
+
+  if (missingBodies.length > 0) {
+    fail(`${plural(missingBodies.length, 'issue')} has no usable content:encoded body after sanitisation. Nothing was written. Check the publication's full-text RSS output before retrying; descriptions are not substituted for bodies.`);
   }
 
   if (!options.dryRun && toWrite.length > 0) {
@@ -527,11 +610,6 @@ async function main(): Promise<void> {
         `  ${options.dryRun ? 'would write' : 'wrote'}  content/issues/${file.fileName}  → ${POST_KIND_LABELS[file.kind]}, ${where}`,
       );
     }
-  }
-
-  if (options.forceSlug && !toWrite.some((file) => file.slug === options.forceSlug)) {
-    console.log('');
-    console.log(`  note: --force ${options.forceSlug} matched no item in the feed.`);
   }
 
   console.log('');

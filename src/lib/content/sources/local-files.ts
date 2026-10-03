@@ -126,15 +126,18 @@ function normalisePublishedAt(raw: unknown): PublishedAt {
   if (written === '') return { kind: 'missing' };
   if (!ISO_TIMESTAMP.test(written)) return { kind: 'invalid', written };
 
-  const hasTime = written.includes('T') || written.includes(' ');
-  const parsed = new Date(hasTime ? written : `${written}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) return { kind: 'invalid', written };
-
-  // Rejects a day that does not exist: `2026-02-30` parses happily and comes
-  // back as `2026-03-02`, which no longer starts with what was written.
-  if (!parsed.toISOString().startsWith(written.slice(0, 10))) {
+  // Validate the written calendar day separately from the instant. An offset
+  // timestamp near midnight can legitimately fall on a different UTC day.
+  // This still rejects impossible dates such as 2026-02-30 before parsing time.
+  const day = written.slice(0, 10);
+  const calendarDay = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(calendarDay.getTime()) || !calendarDay.toISOString().startsWith(day)) {
     return { kind: 'invalid', written };
   }
+
+  const hasTime = /[T ]/i.test(written);
+  const parsed = new Date(hasTime ? written : `${written}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return { kind: 'invalid', written };
 
   return { kind: 'valid', iso: parsed.toISOString() };
 }

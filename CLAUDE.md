@@ -711,13 +711,15 @@ Tailwind utility names map onto these: `bg-ink`, `bg-surface`, `bg-surface-2`,
 
 ## 10. Feed findings
 
-**Not yet established.** No `BEEHIIV_RSS_URL` was supplied, so the four checks the
-brief asks for could not be run against the real feed:
+**Checked on 3 October 2026.** The publication's public feed,
+`https://rss.beehiiv.com/feeds/q2HQCm9T6z.xml`, returns HTTP 200 and a valid RSS
+channel, but no published issues. The remaining checks require the first issue:
 
-1. How many `<item>` elements the feed returns — **unknown**.
+1. How many `<item>` elements the feed returns — **0 at this check**.
 2. Whether `content:encoded` carries full post HTML or only a summary — **unknown**.
-   The sync script warns per item when a body is missing, so this will be obvious
-   on the first real run.
+   Run `npm run sync-issues -- --dry-run` after the first issue is published.
+   The sync reports `has no content:encoded body` and exits nonzero before any
+   writes if a pending issue has no usable body; it never substitutes a summary.
 3. The exact format of `<link>` values — **unknown**; slug derivation takes the
    final path segment and falls back to slugifying the title.
 4. Whether `<enclosure>` or `media:content` supplies a cover image — **unknown**;
