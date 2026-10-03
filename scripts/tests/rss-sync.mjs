@@ -119,6 +119,21 @@ function passed(name) { checks++; console.log(`PASS ${name}`); }
   assert.deepEqual(await files(), names);
   passed('frontmatter slug and archived filename stay permanent');
 
+  feed = rss(item('source-renamed', '<p>[SAMPLE] GUID temporarily absent.</p>', 'full-text-guid').replace('<guid>full-text-guid</guid>', ''));
+  result = await run(cwd, script, ['--force', 'permanent-local-url']);
+  assert.equal(result.code, 0, result.out);
+  assert.match(await fs.readFile(issueFile, 'utf8'), /beehiivGuid: "full-text-guid"/);
+  feed = rss(item('source-renamed-again', '<p>[SAMPLE] GUID returned.</p>', 'full-text-guid'));
+  result = await run(cwd, script);
+  assert.equal(result.code, 0, result.out);
+  assert.deepEqual(await files(), names);
+  assert.match(result.out, /skipped\s+1 already present/);
+  feed = rss(item('source-renamed', '<p>[SAMPLE] Link temporarily absent.</p>', 'full-text-guid').replace('<link>https://example.invalid/p/source-renamed</link>', ''));
+  result = await run(cwd, script, ['--force', 'permanent-local-url']);
+  assert.equal(result.code, 0, result.out);
+  assert.match(await fs.readFile(issueFile, 'utf8'), /beehiivUrl: "https:\/\/example\.invalid\/p\/source-renamed"/);
+  passed('forced updates preserve temporarily omitted source identifiers');
+
   const scaffold = path.join(root, 'scaffold');
   const register = path.join(root, 'isolated-register');
   await fs.mkdir(scaffold);

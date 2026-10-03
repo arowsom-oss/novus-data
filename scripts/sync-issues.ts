@@ -574,8 +574,9 @@ async function main(): Promise<void> {
         slug,
         publishedAt,
         excerpt: deriveExcerpt(item),
-        beehiivUrl: item.link,
-        beehiivGuid: item.guid,
+        // A temporary omission must not erase a known source identifier.
+        beehiivUrl: item.link ?? overwriting?.link ?? null,
+        beehiivGuid: item.guid ?? overwriting?.guid ?? null,
         coverImageUrl: item.coverImageUrl,
         tags: item.categories,
         body,
