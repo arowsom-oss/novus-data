@@ -585,9 +585,25 @@ GitHub redirects the old address, both in the browser and for `git`.
   Connectors → GitHub**, and when GitHub asks where to install, include the
   new organisation and this repository. Until then, Claude sessions cannot
   read or push to it.
+
+  If GitHub says **"This action must be performed by an organization owner"**,
+  a repository admin cannot complete it. An owner should open
+  `https://github.com/apps/claude/installations/select_target`, select
+  **novus-data**, and grant Claude access to **novus-data/novus-data**. Review any
+  pending app permission request in the organisation's settings. Once access is
+  approved, start a **new Claude Code session** and select the organisation
+  repository; an existing session on `arowsom-oss/novus-data` still targets the
+  fork. Repo access and Vercel's Git connection are separate settings.
 - **Vercel**, if the project is already imported: **Project → Settings → Git**.
   If it shows disconnected, reconnect and allow the Vercel app on the
   organisation.
+
+  If it still names `arowsom-oss/novus-data`, pushes to the organisation will not
+  deploy there. Verify an organisation preview before changing the production
+  source. Keep Production Branch as `claude/practical-einstein-tzfg55`. A preview
+  also needs the required public environment values: a failed preview naming
+  `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` needs that variable enabled for **Preview**,
+  rather than disabling the launch guard.
 - **Local clones:** `git remote set-url origin
   https://github.com/<name>/novus-data.git`. The redirect works today, but it
   breaks for good if anyone ever creates a new `Novous-Data/novus-data`.
@@ -717,3 +733,9 @@ run is clean, run `npm run sync-issues`, review the new files in
 `content/issues/`, commit and push — Part 3. Do it soon after sending: the feed
 only keeps recent posts. The first real run also answers the four open questions
 in CLAUDE.md §10, which should be recorded there.
+
+The importer exits non-zero and writes **nothing** if a pending issue has a
+missing or empty full-text body, including a forced re-pull. A description is
+never used as a replacement body. A feed with zero items proves the URL works,
+but cannot prove full-text support. After the first send, compare the dry run
+and imported body against the published issue before committing it.

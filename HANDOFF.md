@@ -3,6 +3,35 @@
 State of the build, what is unresolved, and what I decided when the brief did not
 decide for me. Written to be read once, in order.
 
+## Launch check — 3 October 2026
+
+- The organisation repository, `novus-data/novus-data`, contains Gavin's merged
+  boxed-story redesign (PR #13). Vercel still points at `arowsom-oss/novus-data`,
+  whose production branch does not contain that merge. The default branch in
+  both repositories is `claude/practical-einstein-tzfg55`.
+- Every fetched branch still has an empty issue archive and no register entries.
+  Beehiiv has one empty "New post" draft; the publication's public RSS feed
+  returned HTTP 200 with zero items. The redesign is finished code, not evidence
+  that a first issue or register assessment has been written. Locate the editor's
+  approved copy before publishing or importing anything.
+- The importer now reads `.env.local`, rejects missing or empty
+  `content:encoded` bodies before writing any issue, and preserves archived
+  filenames and permanent slugs when a source post is renamed. A real dry run
+  reached the public feed, but **full-text output remains unverified** until an
+  issue is published. Isolated regression cases cover full text, summaries,
+  forced updates and collisions; they do not establish Beehiiv's live output.
+  Run `npm run test:regressions` to repeat them; the checks use temporary
+  directories and a local RSS server, with no writes to the production archive.
+- GitHub's Claude app access page says an **organisation owner** must act;
+  repository admin access does not satisfy that requirement. The signed-in
+  account's organisation invitation page shows "Invitation not found". An owner
+  needs to approve Claude for this repository (or invite Alex as an owner).
+  Then start a new Claude Code session with `novus-data/novus-data` selected.
+- A failed fork preview was traced to the missing
+  `NEXT_PUBLIC_BEEHIIV_SUBSCRIBE_URL` in the **Preview** environment, rather than
+  a commit-author restriction. Production inputs passed the local production
+  build. Keep the launch guard enabled while correcting preview configuration.
+
 ---
 
 ## 0. The brief changed after the first build
@@ -34,11 +63,10 @@ see 4.12. It got stricter, because the site now names companies.
    never supplied are `null` and the site renders around their absence. Start at
    `INPUT_LEDGER` in that file — it is the to-do list. (Section 3 below.)
 
-2. **A production build fails on purpose right now.** The editor's name is
-   confirmed. The Beehiiv publication exists, but its subscribe URL must be
-   configured through the environment. The public contact address is not yet
-   chosen. `npm run build` names whichever inputs are missing. That is deliberate:
-   a subscribe button that goes nowhere defeats the point of the site. (Section 4.)
+2. **A production build checks the launch inputs.** The editor's name, subscribe
+   URL and public contact address have been supplied. Environment values stay out
+   of Git. `npm run build` names whichever inputs are missing in the environment
+   being built; a preview needs them too. (Section 4.)
 
 3. **`/privacy` describes the current deployment.** It is deliberately not
    drafted as a legal policy, and it must be updated in the same change if the
@@ -56,7 +84,7 @@ All twelve milestones of the brief, plus a review preview that was not in it.
 | 1 Scaffold, docs, env | Done |
 | 2 Design tokens, fonts, wordmark, icons | Done |
 | 3 Content layer, `/debug/content` | Done |
-| 4 Sync script | Written and tested; **never run against the real feed** — no URL supplied |
+| 4 Sync script | Tested against isolated full-text and summary feeds; real dry run returned zero items. Full-text output still unverified |
 | 5 Site shell, 404, error boundaries | Done |
 | 6 Deployment instructions | `DEPLOY.md`. Not executed — Rule 7 |
 | 7 Home page, including pre-launch state | Done |

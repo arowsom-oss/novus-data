@@ -1,4 +1,5 @@
 import { postCardImage } from '@/components/post-card-image';
+import { monitorAndArticlesEnabled } from '@/config/launch';
 import { publication } from '@/config/publication';
 import { POST_KIND_LABELS, getArticle, listArticleSlugs } from '@/lib/content';
 import { formatLongDate } from '@/lib/format';
@@ -10,11 +11,13 @@ export const contentType = 'image/png';
 
 /** One card per article or review, generated at build time alongside the page. */
 export async function generateStaticParams() {
+  if (!monitorAndArticlesEnabled) return [];
   const slugs = await listArticleSlugs();
   return slugs.map((slug) => ({ slug }));
 }
 
 export default async function ArticleOpengraphImage({ params }: { params: Promise<{ slug: string }> }) {
+  if (!monitorAndArticlesEnabled) return new Response(null, { status: 404 });
   const { slug } = await params;
   const issue = await getArticle(slug);
 

@@ -174,7 +174,7 @@ async function main(): Promise<void> {
       if (!hasFeedUrl) {
         detail(
           'BEEHIIV_RSS_URL is not set, so `npm run sync-issues` cannot run.\n' +
-            'Beehiiv shows the feed URL in the publication settings — do not guess it.',
+            'Use the publication feed in DEPLOY.md Part 8; the RSS settings/import screen is a different feature.',
         );
       }
     } else {

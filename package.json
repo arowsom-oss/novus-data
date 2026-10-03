@@ -15,6 +15,7 @@
     "live:check": "tsx scripts/live-check.ts",
     "new-disruption": "tsx scripts/new-disruption.ts",
     "check": "npm run typecheck && npm run lint && npm run doctor",
+    "test:regressions": "node scripts/tests/rss-sync.mjs && tsx scripts/tests/content.ts",
     "build:preview": "NOVUS_ALLOW_INCOMPLETE=1 next build",
     "preview": "tsx scripts/build-preview.ts"
   },
