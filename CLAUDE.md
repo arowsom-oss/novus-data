@@ -672,19 +672,54 @@ be used rather than reinvented:
 page title is decoration" holds for a web page, but a masthead is exactly where
 a rule carries meaning: it closes the title block and opens the content.
 
+### The story box — amended by the author (29 September 2026)
+
+The author's brief: the site "looks too vibe coded", and text should sit on a
+backing, in a boxed-article format. So **text no longer floats on `--ink`.**
+Every block of reading text sits in a story box, `StoryBox` in
+`src/components/story-box.tsx`, styled by `.story` in `globals.css`:
+
+- **One grammar:** kicker, headline, optional deck, body, footer, in that
+  order. Links, dates and counts go in the footer, where a paper puts a
+  story's dateline. `story-lead` is the heavier-ruled main story;
+  `story-compact` is a rail or list box.
+- **Square corners, no shadow, a 2px `--accent` top rule** (4px on the lead)
+  and a `--border-strong` frame. A rounded card with a drop shadow is the
+  default component of a generated page; a ruled box is what a newspaper
+  uses. Do not round it or add a shadow in a polish pass.
+- **`.story` is in `@layer components` on purpose**, so a utility at the call
+  site (a column span, `gap-0`) still wins. This is the opposite of
+  `.prose-novus`, and for the opposite reason: nothing needs to beat `.story`.
+- **The home page is a front page, not a landing page.** A nameplate (the
+  page's `h1`, closed by a double rule), a lead story with a rail beside it,
+  then labelled bands of boxes (`SectionLabel`). The lead is chosen, never
+  written: the top open register entry, else the latest briefing, else the
+  case for the site. The hero, the two call-to-action buttons, "What we do",
+  the four equal pillars and the decorative grid-line backdrop (`.grid-field`)
+  were the template tells and are gone. Do not bring back a hero.
+- **Lists stay one object.** The briefing archive is one box with hairlines
+  between issues (a sequence reads as aligned columns); the register is one
+  box per entry (each entry is a story).
+- `ActionLink`'s primary variant sits on `--surface-2` so it still reads as a
+  control inside a `--surface` box.
+- **Print:** surfaces already collapse to white, so a box prints as a grey
+  frame with its accent top rule. Compact boxes do not split across pages.
+
 Tailwind utility names map onto these: `bg-ink`, `bg-surface`, `bg-surface-2`,
 `text-fg`, `text-muted`, `text-link`, `border-hairline`, `border-rule`,
 `border-accent`.
 
 ## 10. Feed findings
 
-**Not yet established.** No `BEEHIIV_RSS_URL` was supplied, so the four checks the
-brief asks for could not be run against the real feed:
+**Checked on 3 October 2026.** The publication's public feed,
+`https://rss.beehiiv.com/feeds/q2HQCm9T6z.xml`, returns HTTP 200 and a valid RSS
+channel, but no published issues. The remaining checks require the first issue:
 
-1. How many `<item>` elements the feed returns — **unknown**.
+1. How many `<item>` elements the feed returns — **0 at this check**.
 2. Whether `content:encoded` carries full post HTML or only a summary — **unknown**.
-   The sync script warns per item when a body is missing, so this will be obvious
-   on the first real run.
+   Run `npm run sync-issues -- --dry-run` after the first issue is published.
+   The sync reports `has no content:encoded body` and exits nonzero before any
+   writes if a pending issue has no usable body; it never substitutes a summary.
 3. The exact format of `<link>` values — **unknown**; slug derivation takes the
    final path segment and falls back to slugifying the title.
 4. Whether `<enclosure>` or `media:content` supplies a cover image — **unknown**;

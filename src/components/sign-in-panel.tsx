@@ -91,14 +91,15 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
 
   if (!enabled) {
     return (
-      <section aria-labelledby={headingId} className="border border-hairline bg-surface p-7 sm:p-8">
-        <h2 id={headingId} className="font-serif text-heading font-semibold text-fg">
+      <section aria-labelledby={headingId} className="story story-compact">
+        <p className="kicker kicker-muted">Accounts</p>
+        <h2 id={headingId} className="story-title">
           Accounts are not open yet
         </h2>
-        <p className="mt-2 text-meta text-muted">
+        <p className="text-[0.9375rem] text-muted">
           Everything on Novus Data is free to read without an account.
         </p>
-        <p className="mt-4 border-t border-hairline pt-4 text-meta text-muted">
+        <p className="story-foot">
           When accounts open they will save the companies and lanes you follow, so the register
           and the exposure chart lead with what reaches you.
         </p>
@@ -108,16 +109,14 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
 
   if (enabled && checked && signedInAs) {
     return (
-      <section
-        aria-labelledby={headingId}
-        className="border border-hairline bg-surface p-7 sm:p-8"
-      >
-        <h2 id={headingId} className="text-heading font-semibold text-fg">
+      <section aria-labelledby={headingId} className="story story-compact">
+        <p className="kicker kicker-muted">Account</p>
+        <h2 id={headingId} className="story-title">
           Signed in
         </h2>
-        <p className="mt-2 break-words text-meta text-muted">{signedInAs}</p>
+        <p className="break-words text-meta text-muted">{signedInAs}</p>
 
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="mt-2 flex flex-col gap-3">
           <Link
             href="/account"
             className="inline-flex min-h-11 items-center justify-center border border-accent bg-surface-2 px-5 py-3 text-[0.9375rem] font-medium text-fg transition-colors hover:border-link"
@@ -139,15 +138,16 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
   }
 
   return (
-    <section aria-labelledby={headingId} className="border border-hairline bg-surface p-7 sm:p-8">
-      <h2 id={headingId} className="text-heading font-semibold text-fg">
+    <section aria-labelledby={headingId} className="story story-compact">
+      <p className="kicker kicker-muted">Account</p>
+      <h2 id={headingId} className="story-title">
         Sign in
       </h2>
-      <p className="mt-2 text-meta text-muted">
+      <p className="text-meta text-muted">
         We email you a link. There is no password to choose or remember.
       </p>
 
-      <form className="mt-6 flex flex-col gap-4" onSubmit={requestLink}>
+      <form className="mt-2 flex flex-col gap-4" onSubmit={requestLink}>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={emailId} className="text-meta text-muted">
             Email
@@ -179,7 +179,7 @@ export function SignInPanel({ enabled = false }: { enabled?: boolean }) {
         </p>
       </form>
 
-      <p className="mt-2 border-t border-hairline pt-4 text-meta text-muted">
+      <p className="story-foot">
         An account saves the companies and sectors you follow, so the register and the exposure
         chart lead with what reaches you.
       </p>

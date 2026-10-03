@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { Container } from '@/components/container';
 import { PageHeader } from '@/components/page-header';
+import { StoryBox } from '@/components/story-box';
 import { ExternalLink, TextLink } from '@/components/text-link';
 import { monitorAndArticlesEnabled } from '@/config/launch';
 import { publication } from '@/config/publication';
@@ -13,6 +14,13 @@ export const metadata: Metadata = {
   alternates: { canonical: absoluteUrl('/privacy') },
 };
 
+/*
+ * This page is a plain description of how the site actually behaves today. It
+ * is deliberately not drafted as a legal privacy policy, and it has not been
+ * reviewed by anyone qualified to write one. If analytics, embeds, a comment
+ * system or any third-party script is ever added, this page stops being
+ * accurate the moment that change ships — update it in the same change.
+ */
 export default function PrivacyPage() {
   // The page describes what this deployment actually does. With no account
   // store configured there is genuinely nothing held, and saying otherwise
@@ -22,11 +30,12 @@ export default function PrivacyPage() {
   return (
     <>
       <PageHeader
+        width="reading"
         title="Privacy"
         lede="What this site does with information, described plainly."
       />
 
-      <Container width="reading" className="mt-12 flex flex-col gap-10">
+      <Container width="reading" className="mt-8 flex flex-col gap-5">
         <Section heading="This site">
           <p>
             The pages you read — the register, the exposure chart, the company and sector pages
@@ -117,9 +126,8 @@ export default function PrivacyPage() {
               deployment, and nothing about you is collected for accounts.
             </p>
             <p>
-              The signed-in experience can be designed before accounts are switched on. When
-              accounts go live, this page will describe exactly what is held and why in the same
-              release, not afterwards.
+              When accounts go live, this page will describe exactly what is held and why in the
+              same release, not afterwards.
             </p>
           </Section>
         )}
@@ -174,11 +182,11 @@ export default function PrivacyPage() {
   );
 }
 
+/** Each part of the policy is a boxed story, so the text sits on a backing. */
 function Section({ heading, children }: { heading: string; children: React.ReactNode }) {
   return (
-    <section>
-      <h2 className="text-heading font-semibold text-fg">{heading}</h2>
-      <div className="mt-4 flex max-w-measure flex-col gap-4 text-muted">{children}</div>
-    </section>
+    <StoryBox as="section" level={2} title={heading}>
+      {children}
+    </StoryBox>
   );
 }

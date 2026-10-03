@@ -48,3 +48,6 @@ jobs:
       - run: npm ci
 
       - run: npm run check
+
+      # Isolated temporary files and a local RSS server; no publication access.
+      - run: npm run test:regressions

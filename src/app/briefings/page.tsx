@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Container } from '@/components/container';
 import { IssueList } from '@/components/issue-list';
 import { PageHeader } from '@/components/page-header';
+import { StoryBox } from '@/components/story-box';
 import { SubscribePanel } from '@/components/subscribe-panel';
 import { TextLink } from '@/components/text-link';
 import { publication } from '@/config/publication';
@@ -30,7 +31,7 @@ export default async function BriefingsPage() {
         }
       />
 
-      <Container className="mt-12 sm:mt-16">
+      <Container className="mt-8">
         {issues.length === 0 ? (
           <EmptyArchive />
         ) : grouped ? (
@@ -56,7 +57,7 @@ export default async function BriefingsPage() {
       </Container>
 
       {issues.length > 0 ? (
-        <Container className="mt-20">
+        <Container className="mt-5">
           <SubscribePanel heading="Get the next one by email" />
         </Container>
       ) : null}
@@ -66,17 +67,21 @@ export default async function BriefingsPage() {
 
 function EmptyArchive() {
   return (
-    <div className="max-w-reading">
-      <p className="text-muted">
-        Nothing has been published yet, so there is nothing to archive. Once the first issue is
-        out it appears here and stays here permanently.
-      </p>
-      <div className="mt-8 max-w-xl">
-        <SubscribePanel heading="Subscribe before the first issue" />
-      </div>
-      <p className="mt-8">
-        <TextLink href="/coverage">What Novus Data will cover</TextLink>
-      </p>
+    <div className="grid max-w-reading gap-5">
+      <StoryBox
+        as="section"
+        level={2}
+        kicker="The archive"
+        kickerTone="muted"
+        title="The first issue has not gone out yet"
+        footer={<TextLink href="/coverage">What Novus Data will cover</TextLink>}
+      >
+        <p>
+          There is nothing to archive yet. Once the first issue is out it appears here and stays
+          here permanently.
+        </p>
+      </StoryBox>
+      <SubscribePanel heading="Subscribe before the first issue" />
     </div>
   );
 }
